@@ -1,10 +1,7 @@
 ---
-title: "Project Proposal"
-author: "Team name - Team member 1, Team member 2, Team member 3, Team member 4"
+title: "Rats in NY: Project Proposal"
+author: "Team BCHZ - Nick Bayer, Richard Cui, Laura Han, Anna Zhang"
 format: pdf
-execute: 
-  warning: false
-  message: false
 editor: visual
 ---
 
@@ -12,9 +9,16 @@ editor: visual
 #| label: load-pkg-data
 library(tidyverse)
 library(tidymodels)
-# add other packages as needed
+library(httr)
+install.packages("httr")
 
-# add code to load data
+api_url <- "https://data.cityofnewyork.us/resource/p937-wjvj.csv"
+response <- GET(api_url)
+rats <- read.csv(text = content(response, "text"))
+```
+
+```{r}
+head(rats)
 ```
 
 ## Introduction
