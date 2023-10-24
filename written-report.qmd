@@ -11,7 +11,8 @@ editor: visual
 ---
 
 ```{r}
-#| label: load packages and data
+#| message: false
+#| error: false
 
 ```
 
