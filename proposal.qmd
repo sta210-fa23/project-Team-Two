@@ -12,13 +12,8 @@ editor: visual
 #| echo: false
 library(tidyverse)
 library(tidymodels)
-```
-
-```{r}
-#| message: false
-#| warning: false
-#| echo: false
-squirrels <- read_csv("data/squirrel_data.csv")
+library("ggplot2") 
+library("gridExtra")
 ```
 
 ## Introduction
@@ -39,16 +34,10 @@ The dataset has 3023 observations and 31 variables, and it gives a wide range of
 
 ## Initial exploratory data analysis
 
-There seems to be roughly equal number of squirrels that were and weren't indifferent to the researchers.
-
 ```{r}
-#| echo: false
-squirrels |>
-  ggplot(aes(x = Indifferent)) +
-  geom_bar(fill = "brown") +
-  labs(title = "Distribution of Response Variable",
-         x = "Activity Score",
-         y = "Frequency")
+#| message: false
+#| warning: false
+squirrels <- read_csv("data/squirrel_data.csv")
 ```
 
 We create a numeric variable named Activity_Score that encapsulates the number of activities a squirrel is engaged in during the span of observation. The distribution of the Activity_Score variable is unimodal, slightly right skewed, and has a median of 1. This means that most squirrels in the data set were only engaged in 1 activity during the span of observation.
@@ -61,60 +50,69 @@ activities <- squirrels |>
          Climbing = ifelse(Climbing == TRUE, 1, 0),
          Eating = ifelse(Eating == TRUE, 1, 0),
          Foraging = ifelse(Foraging == TRUE, 1, 0))
-
-squirrels$Activity_Score <-
-  rowSums(activities)
+squirrels$Activity_Score <- rowSums(activities)
 ```
 
 ```{r}
-#| echo: false
-squirrels |>
+dist_activity <- squirrels |>
   ggplot(aes(x = Activity_Score)) +
   geom_bar(fill = "brown") +
-  labs(title = "Distribution of Numerical Predictor Variable",
+  labs(title = "Spread of Acitivity Scores",
          x = "Activity Score",
          y = "Frequency")
-
 summary(squirrels$Activity_Score)
 ```
 
-There were far fewer squirrels that approached the researchers than squirrels that didn't. This could show that they are not as synurbanized as we thought.
+```{r}
+dist_response <- squirrels |>
+  ggplot(aes(x = Indifferent)) +
+  geom_bar(fill = "brown") +
+  labs(title = "Distribution of Indifference",
+         x = "Activity Score",
+         y = "Frequency")
+```
 
 ```{r}
-#| echo: false
-squirrels |>
+dist_approach <- squirrels |>
   ggplot(aes(x = Approaches)) +
   geom_bar(fill = "brown") +
-  labs(title = "Distribution of Categorical Predictor Variable",
+  labs(title = "Distribution of Whether or not Squirrels Approach Humans",
          x = "Whether Squirrel Approaches",
          y = "Frequency")
 ```
 
-The distribution of Activity_Score for squirrels that were indifferent vs. not indifferent is roughly the same shape. Therefore, activity score and indifference do not seem to be correlated.
-
 ```{r}
-#| echo: false
-squirrels |>
+indiff_activity_graph <- squirrels |>
   ggplot(aes(x = Activity_Score)) +
   geom_bar(fill = "brown") +
   facet_wrap(~ Indifferent) +
-  labs(title = "Squirrel Indifference vs. Activity Score",
+  labs(title = "Indifference vs. Activity Score",
          x = "Activity Score",
          y = "Frequency")
 ```
 
-Since there were so few squirrels that approached the researchers, it is hard to tell whether the graphs are very different in shape. The difference may be something that we explore further.
-
 ```{r}
-#| echo: false
-squirrels |>
+approach_activity_graph <- squirrels |>
   ggplot(aes(x = Activity_Score)) +
   geom_bar(fill = "brown") +
   facet_wrap(~ Approaches) +
-  labs(title = "Squirrel Approach vs. Activity Score",
+  labs(title = "Approach vs. Activity Score",
          x = "Activity Score",
          y = "Frequency")
 ```
+
+```{r}
+grid.arrange(dist_activity, dist_response, dist_approach, nrow = 2)
+grid.arrange(indiff_activity_graph, approach_activity_graph, nrow = 2)
+```
+
+There seems to be roughly equal number of squirrels that were and weren't indifferent to the researchers.
+
+There were far fewer squirrels that approached the researchers than squirrels that didn't. This could show that they are not as synurbanized as we thought.
+
+The distribution of Activity_Score for squirrels that were indifferent vs. not indifferent is roughly the same shape. Therefore, activity score and indifference do not seem to be correlated.
+
+Since there were so few squirrels that approached the researchers, it is hard to tell whether the graphs are very different in shape. The difference may be something that we explore further.
 
 An interaction that we would like to examine further is whether the presence of tail flags and/or twitches influences the likelihood that a squirrel is indifferent to the researchers. Another interaction to explore is how the presence of tail flags plus the number of activities would affect the squirrel's indifference towards humans.
 
@@ -123,3 +121,7 @@ An interaction that we would like to examine further is whether the presence of 
 The response variable is `Indifferent`, which is a categorical variable that indicates whether or not the squirrel is indifferent to humans or not. Potential predictors include `Activity_Score` (a quantitative variable that records the number of activities the squirrel is observed doing), `Age` (a categorical variable that indicates whether the squirrel is adult or juvenile), `Fur_Color` (categorical variable), `Location` (categorical variable), `Above_Ground_Measurement` (quantitative variable), sounds that the squirrels are making (categorical variables including `Kuks`, `Quaas`, and `Moans`), `Tail_flags` and `Tail_twitches`, which are also categorical.
 
 To explore the relationship between whether or not the squirrel is indifferent and the predictor variables, such as age category, location, distance above ground when spotted, number of activities the squirrel is observed doing, sound that the squirrel makes, and their tail signs, we plan to use multiple linear regression. We will compare multiple linear regression models using $R_{adj}^2$, AIC, and BIC to evaluate what predictor variables and what interactions between the variables should be included in the model to best predict the attitude of the squirrel towards humans. We will also perform 10-fold cross validation to assess the performance of the model and estimate its generalization ability.
+
+## Data dictionary
+
+The data dictionary can be found [here](https://github.com/sta210-fa23/project-Team-Two/blob/main/data/README.md).
