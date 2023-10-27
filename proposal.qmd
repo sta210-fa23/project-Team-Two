@@ -9,21 +9,16 @@ editor: visual
 #| label: load-pkg-data
 #| message: false
 #| warning: false
+#| echo: false
 library(tidyverse)
 library(tidymodels)
-library(httr)
 ```
 
 ```{r}
 #| message: false
 #| warning: false
+#| echo: false
 squirrels <- read_csv("data/squirrel_data.csv")
-head(squirrels)
-```
-
-```{r}
-library(tidyverse)
-squirrels |> group_by(`Runs from`) |> summarize(n())
 ```
 
 ## Introduction
@@ -40,13 +35,14 @@ We are sourcing our data set from the TidyTuesday project on GitHub. Their data 
 
 In October of 2018, the Squirrel Census Team and a group of over 300 volunteers collected the data based on squirrel sightings around Central Park.
 
-The Data gives a wide range of observations and characteristics. It first gives us the location, in both longitude and latitude, the hectare of the park the squirrel was located in, the date, and whether it was found in the AM or PM. It also assigns each squirrel a unique ID. It has information on whether the squirrel is an adult or a juvenile, its primary and highlight fur colors, and has a number for the sequence of sightings in one session. It also contains data on their exact location, how far they were from the ground, and the objects they were found on. There is data for the activities the squirrel was found doing, ranging from running to foraging, with a separate column for any activity that was not chosen to be a column. It gives data on the sounds the squirrel made and tail movements, if any. Finally, it has 4 columns for the response, being either that the squirrel approached, was indifferent, ran away, or any other action.
+The dataset has 3023 observations and 31 variables, and it gives a wide range of observations and characteristics. It first gives us the location, in both longitude and latitude, the hectare of the park the squirrel was located in, the date, and whether it was found in the AM or PM. It also assigns each squirrel a unique ID. It has information on whether the squirrel is an adult or a juvenile, its primary and highlight fur colors, and has a number for the sequence of sightings in one session. It also contains data on their exact location, their distance from the ground, and the objects they were found on. There is data for the activities the squirrel was found doing, ranging from running to foraging, with a separate column for any activity that was not chosen to be a column. It gives data on the sounds the squirrel made and tail movements, if any. Finally, it has 4 columns for the response, being either that the squirrel approached, was indifferent, ran away, or any other action.
 
 ## Initial exploratory data analysis
 
 There seems to be roughly equal number of squirrels that were and weren't indifferent to the researchers.
 
 ```{r}
+#| echo: false
 squirrels |>
   ggplot(aes(x = Indifferent)) +
   geom_bar(fill = "brown") +
@@ -71,6 +67,7 @@ squirrels$Activity_Score <-
 ```
 
 ```{r}
+#| echo: false
 squirrels |>
   ggplot(aes(x = Activity_Score)) +
   geom_bar(fill = "brown") +
@@ -81,9 +78,10 @@ squirrels |>
 summary(squirrels$Activity_Score)
 ```
 
-There were far less squirrels that approached the researchers than squirrels that didn't. This could show that they are not as synurbanized as we thought.
+There were far fewer squirrels that approached the researchers than squirrels that didn't. This could show that they are not as synurbanized as we thought.
 
 ```{r}
+#| echo: false
 squirrels |>
   ggplot(aes(x = Approaches)) +
   geom_bar(fill = "brown") +
@@ -95,6 +93,7 @@ squirrels |>
 The distribution of Activity_Score for squirrels that were indifferent vs. not indifferent is roughly the same shape. Therefore, activity score and indifference do not seem to be correlated.
 
 ```{r}
+#| echo: false
 squirrels |>
   ggplot(aes(x = Activity_Score)) +
   geom_bar(fill = "brown") +
@@ -107,6 +106,7 @@ squirrels |>
 Since there were so few squirrels that approached the researchers, it is hard to tell whether the graphs are very different in shape. The difference may be something that we explore further.
 
 ```{r}
+#| echo: false
 squirrels |>
   ggplot(aes(x = Activity_Score)) +
   geom_bar(fill = "brown") +
@@ -116,12 +116,10 @@ squirrels |>
          y = "Frequency")
 ```
 
-An interaction that we would like to examine further is whether the presence of tail flags and/or twitches influences the likelihood that a squirrel is indifferent to the researchers.
+An interaction that we would like to examine further is whether the presence of tail flags and/or twitches influences the likelihood that a squirrel is indifferent to the researchers. Another interaction to explore is how the presence of tail flags plus the number of activities would affect the squirrel's indifference towards humans.
 
 ## Analysis approach
 
-...
+The response variable is `Indifferent`, which is a categorical variable that indicates whether or not the squirrel is indifferent to humans or not. Potential predictors include `Activity_Score` (a quantitative variable that records the number of activities the squirrel is observed doing), `Age` (a categorical variable that indicates whether the squirrel is adult or juvenile), `Fur_Color` (categorical variable), `Location` (categorical variable), `Above_Ground_Measurement` (quantitative variable), sounds that the squirrels are making (categorical variables including `Kuks`, `Quaas`, and `Moans`), `Tail_flags` and `Tail_twitches`, which are also categorical.
 
-## Data dictionary
-
-The data dictionary can be found [here](ADD%20LINK!!!) \[Update the link and remove this note!\]
+To explore the relationship between whether or not the squirrel is indifferent and the predictor variables, such as age category, location, distance above ground when spotted, number of activities the squirrel is observed doing, sound that the squirrel makes, and their tail signs, we plan to use multiple linear regression. We will compare multiple linear regression models using $R_{adj}^2$, AIC, and BIC to evaluate what predictor variables and what interactions between the variables should be included in the model to best predict the attitude of the squirrel towards humans. We will also perform 10-fold cross validation to assess the performance of the model and estimate its generalization ability.
