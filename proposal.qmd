@@ -1,5 +1,5 @@
 ---
-title: "Rats in NY: Project Proposal"
+title: "Squirrels in NY: Project Proposal"
 author: "Team BCHZ - Nick Bayer, Richard Cui, Laura Han, Anna Zhang"
 format: pdf
 editor: visual
@@ -32,7 +32,7 @@ As a result of the continuous human development, animals are inevitably interact
 
 In an effort to investigate these two competing theories, and to better understand the dynamic between squirrels and humans, we carry out this research project to explore what factors affect whether a squirrel is indifferent to human presence. From there, we would like to deduce whether the squirrels' attitude to humans are caused by human presence or other factors such as their species.
 
-We hypothesize that the age category, fur color, location, distance above ground when spotted, number of activities that the squirrel was doing, sound that the squirrel makes, and whether squirrel is disturbed by human activities (as measured by features like approaching or running away from humans and tail signs) could have a relationship with the attitude of the squirrel (whether indifferent or not).
+We hypothesize that the age category, location, distance above ground when spotted, number of activities that the squirrel was doing, sound that the squirrel makes, and whether squirrel is disturbed by human activities (as measured by features like approaching or running away from humans and tail signs) could have a relationship with the attitude of the squirrel (whether indifferent or not).
 
 ## Data description
 
@@ -44,7 +44,79 @@ The Data gives a wide range of observations and characteristics. It first gives 
 
 ## Initial exploratory data analysis
 
-...
+There seems to be roughly equal number of squirrels that were and weren't indifferent to the researchers.
+
+```{r}
+squirrels |>
+  ggplot(aes(x = Indifferent)) +
+  geom_bar(fill = "brown") +
+  labs(title = "Distribution of Response Variable",
+         x = "Activity Score",
+         y = "Frequency")
+```
+
+We create a numeric variable named Activity_Score that encapsulates the number of activities a squirrel is engaged in during the span of observation. The distribution of the Activity_Score variable is unimodal, slightly right skewed, and has a median of 1. This means that most squirrels in the data set were only engaged in 1 activity during the span of observation.
+
+```{r}
+activities <- squirrels |>
+  select(c(Running, Chasing, Climbing, Eating, Foraging)) |>
+  mutate(Running = ifelse(Running == TRUE, 1, 0),
+         Chasing = ifelse(Chasing == TRUE, 1, 0),
+         Climbing = ifelse(Climbing == TRUE, 1, 0),
+         Eating = ifelse(Eating == TRUE, 1, 0),
+         Foraging = ifelse(Foraging == TRUE, 1, 0))
+
+squirrels$Activity_Score <-
+  rowSums(activities)
+```
+
+```{r}
+squirrels |>
+  ggplot(aes(x = Activity_Score)) +
+  geom_bar(fill = "brown") +
+  labs(title = "Distribution of Numerical Predictor Variable",
+         x = "Activity Score",
+         y = "Frequency")
+
+summary(squirrels$Activity_Score)
+```
+
+There were far less squirrels that approached the researchers than squirrels that didn't. This could show that they are not as synurbanized as we thought.
+
+```{r}
+squirrels |>
+  ggplot(aes(x = Approaches)) +
+  geom_bar(fill = "brown") +
+  labs(title = "Distribution of Categorical Predictor Variable",
+         x = "Whether Squirrel Approaches",
+         y = "Frequency")
+```
+
+The distribution of Activity_Score for squirrels that were indifferent vs. not indifferent is roughly the same shape. Therefore, activity score and indifference do not seem to be correlated.
+
+```{r}
+squirrels |>
+  ggplot(aes(x = Activity_Score)) +
+  geom_bar(fill = "brown") +
+  facet_wrap(~ Indifferent) +
+  labs(title = "Squirrel Indifference vs. Activity Score",
+         x = "Activity Score",
+         y = "Frequency")
+```
+
+Since there were so few squirrels that approached the researchers, it is hard to tell whether the graphs are very different in shape. The difference may be something that we explore further.
+
+```{r}
+squirrels |>
+  ggplot(aes(x = Activity_Score)) +
+  geom_bar(fill = "brown") +
+  facet_wrap(~ Approaches) +
+  labs(title = "Squirrel Approach vs. Activity Score",
+         x = "Activity Score",
+         y = "Frequency")
+```
+
+An interaction that we would like to examine further is whether the presence of tail flags and/or twitches influences the likelihood that a squirrel is indifferent to the researchers.
 
 ## Analysis approach
 
