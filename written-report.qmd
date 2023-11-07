@@ -37,13 +37,12 @@ The dataset has 3023 observations and 31 variables, and it gives a wide range of
 
 ## Initial exploratory data analysis
 
-```{r} #| message: false #| warning: false}
-squirrels <- read_csv("data/squirrel_data.csv")
-```
+`{r} #| message: false #| warning: false} squirrels <- read_csv("data/squirrel_data.csv")`
 
 We create a numeric variable named Activity_Score that encapsulates the number of activities a squirrel is engaged in during the span of observation. The distribution of the Activity_Score variable is unimodal, slightly right skewed, and has a median of 1. This means that most squirrels in the data set were only engaged in 1 activity during the span of observation.
 
 ```{r}
+squirrels <- read_csv("data/squirrel_data.csv")
 activities <- squirrels |>   
   select(c(Running, Chasing, Climbing, Eating, Foraging)) |>
   mutate(Running = ifelse(Running == TRUE, 1, 0),
@@ -128,6 +127,13 @@ To explore the relationship between whether or not the squirrel is indifferent a
 The data dictionary can be found [here](https://github.com/sta210-fa23/project-Team-Two/blob/main/data/README.md).
 
 ```{r}
+squirrels |>
+  select(c(Quaas, `Tail flags`)) |>
+  mutate(Quaas_d = ifelse(Quaas == TRUE, 1, 0), 
+         Tail_flags_d = ifelse(`Tail flags` == TRUE, 1, 0))
+```
+
+```{r}
 set.seed(10)
 squirrels_split <- initial_split(squirrels, prop = 0.80)
 squirrels_train <- training(squirrels_split)
@@ -136,8 +142,8 @@ squirrels_test  <- testing(squirrels_split)
 set.seed(10)
 folds <- vfold_cv(squirrels_train, v = 10)
 
-squirrels_spec <- linear_reg() |>
-  set_engine("lm")
+squirrels_spec <- logistic_reg() |>
+  set_engine("glm")
 ```
 
 ```{r}
