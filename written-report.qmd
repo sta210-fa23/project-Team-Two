@@ -141,9 +141,9 @@ squirrels_spec <- linear_reg() |>
 ```
 
 ```{r}
-squirrels_rec <- recipe(Indifference ~ Activity_Score + Age + Fur_Color + Location + Above_Ground_Measurement + Kuks + Quaas + Moans,
+squirrels_rec <- recipe(Indifferent ~ Activity_Score + Age + Fur_Color + Location + Above_Ground_Measurement + Kuks + Quaas + Moans,
                     data = squirrels_train) |>
-  step_dummy(all_nominal_predictors()) |>
+  step_dummy(all_nominal_predictors())
 
 squirrels_workflow = workflow() |>
   add_model(squirrels_spec) |>
