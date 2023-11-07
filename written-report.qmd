@@ -141,13 +141,13 @@ squirrels_spec <- linear_reg() |>
 ```
 
 ```{r}
-squirrels_rec <- recipe(Indifferent ~ Activity_Score + Age + Fur_Color + Location + Above_Ground_Measurement + Kuks + Quaas + Moans,
+squirrels_rec <- recipe(Indifferent ~ Activity_Score + Age + `Primary Fur Color` + Location + `Above Ground Sighter Measurement` + Kuks + Quaas + Moans + `Tail flags` + `Tail twitches`,
                     data = squirrels_train) |>
   step_dummy(all_nominal_predictors())
 
 squirrels_workflow = workflow() |>
   add_model(squirrels_spec) |>
-  add_recipe(squirrels_rec1)
+  add_recipe(squirrels_rec)
 ```
 
 Your written report goes here!
