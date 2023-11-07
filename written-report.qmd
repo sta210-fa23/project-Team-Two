@@ -127,13 +127,6 @@ To explore the relationship between whether or not the squirrel is indifferent a
 The data dictionary can be found [here](https://github.com/sta210-fa23/project-Team-Two/blob/main/data/README.md).
 
 ```{r}
-squirrels |>
-  select(c(Quaas, `Tail flags`)) |>
-  mutate(Quaas_d = ifelse(Quaas == TRUE, 1, 0), 
-         Tail_flags_d = ifelse(`Tail flags` == TRUE, 1, 0))
-```
-
-```{r}
 set.seed(10)
 squirrels_split <- initial_split(squirrels, prop = 0.80)
 squirrels_train <- training(squirrels_split)
@@ -149,7 +142,8 @@ squirrels_spec <- logistic_reg() |>
 ```{r}
 squirrels_rec <- recipe(Indifferent ~ Activity_Score + Age + `Primary Fur Color` + Location + `Above Ground Sighter Measurement` + Kuks + Quaas + Moans + `Tail flags` + `Tail twitches`,
                     data = squirrels_train) |>
-  step_dummy(all_nominal_predictors())
+  step_dummy(all_nominal_predictors()) |>
+  step_interact(terms = ~ Quaas * `Tail flags`)
 
 squirrels_workflow = workflow() |>
   add_model(squirrels_spec) |>
