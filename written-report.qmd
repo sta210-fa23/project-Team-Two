@@ -143,11 +143,16 @@ squirrels_spec <- logistic_reg() |>
 squirrels_rec <- recipe(Indifferent ~ Activity_Score + Age + `Primary Fur Color` + Location + `Above Ground Sighter Measurement` + Kuks + Quaas + Moans + `Tail flags` + `Tail twitches`,
                     data = squirrels_train) |>
   step_dummy(all_nominal_predictors()) |>
-  step_interact(terms = ~ Quaas * `Tail flags`)
+  step_interact(terms = ~ Quaas * `Tail flags`) |>
+  step_mutate(`Above Ground Sighter Measurement` = ifelse(
+    `Above Ground Sighter Measurement` == FALSE, 0, `Above Ground Sighter Measurement`)) |>
+  step_zv(all_predictors())
 
 squirrels_workflow = workflow() |>
   add_model(squirrels_spec) |>
   add_recipe(squirrels_rec)
+
+squirrels_workflow
 ```
 
 Your written report goes here!
