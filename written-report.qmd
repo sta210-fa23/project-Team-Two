@@ -140,20 +140,133 @@ squirrels_spec <- logistic_reg() |>
 ```
 
 ```{r}
-squirrels_rec <- recipe(Indifferent ~ Activity_Score + Age + `Primary Fur Color` + Location + `Above Ground Sighter Measurement` + Kuks + Quaas + Moans + `Tail flags` + `Tail twitches`,
+squirrels
+```
+
+### Model 1
+
+Model 1 includes all variables stated in our hypothesis.
+
+Recipe for Model 1 steps:
+1. Change response variable into factors
+2. Map all "FALSE" in `Above Ground Sighter Measurement` variable to 0, then convert the variable type to integer.
+3. Create dummy variables for all nominal predictors
+4. Create interaction terms between `Quaas` and `Tail flags`
+5. Remove all variables with zero variance
+
+```{r}
+#| message: false
+#| error: false
+#| warning: false
+squirrels_rec1 <- recipe(Indifferent ~ Activity_Score + Age + 
+                          `Primary Fur Color` + Location + 
+                          `Above Ground Sighter Measurement` + 
+                          Kuks + Quaas + Moans + `Tail flags` + 
+                          `Tail twitches`,
                     data = squirrels_train) |>
-  step_dummy(all_nominal_predictors()) |>
-  step_interact(terms = ~ Quaas * `Tail flags`) |>
+  step_mutate(Indifferent = as.factor(Indifferent)) |>
   step_mutate(`Above Ground Sighter Measurement` = ifelse(
-    `Above Ground Sighter Measurement` == FALSE, 0, `Above Ground Sighter Measurement`)) |>
+    `Above Ground Sighter Measurement` == "FALSE", 0, 
+    `Above Ground Sighter Measurement`)) |>
+  step_mutate(`Above Ground Sighter Measurement` = 
+                as.integer(`Above Ground Sighter Measurement`)) |>
+  step_dummy(all_nominal_predictors()) |>
+  step_interact(terms = ~ Quaas:`Tail flags`) |>
   step_zv(all_predictors())
 
+prep(squirrels_rec1) |>
+  bake(squirrels_train) |>
+  glimpse()
+```
+
+
+```{r}
+calc_model_stats <- function(x) {
+  glance(extract_fit_parsnip(x)) |>
+    select(AIC, BIC)
+}
+```
+
+```{r}
+#| message: false
+#| error: false
 squirrels_workflow = workflow() |>
   add_model(squirrels_spec) |>
-  add_recipe(squirrels_rec)
+  add_recipe(squirrels_rec1)
 
-squirrels_workflow
+squirrels_cv1 <- squirrels_workflow |>
+  fit_resamples(resamples = folds,
+                control = control_resamples(extract = calc_model_stats)) 
+
+# assessment
+collect_metrics(squirrels_cv1, summarize = TRUE)
 ```
+
+```{r}
+map_df(squirrels_cv1$.extracts, ~ .x[[1]][[1]]) |>
+  summarise(mean_aic = mean(AIC), 
+            mean_bic = mean(BIC))
+```
+
+### Model 2
+
+As the EDA has shown, Activity score does not seem to have a relationship with `Indifferent`, so we take it out for Model 2.
+
+Recipe for Model 2 steps:
+1. Change response variable into factors
+2. Map all "FALSE" in `Above Ground Sighter Measurement` variable to 0, and not "FALSE" to 1, then convert the variable type to factors.
+3. Create dummy variables for all nominal predictors
+4. Remove all variables with zero variance
+
+```{r}
+#| message: false
+#| error: false
+#| warning: false
+squirrels_rec2 <- recipe(Indifferent ~ Age + 
+                          `Primary Fur Color` + Location + 
+                          `Above Ground Sighter Measurement` + 
+                          Kuks + Quaas + Moans + `Tail flags` + 
+                          `Tail twitches`,
+                    data = squirrels_train) |>
+  step_mutate(Indifferent = as.factor(Indifferent)) |>
+  step_mutate(`Above Ground Sighter Measurement` = ifelse(
+    `Above Ground Sighter Measurement` == "FALSE", 0, 
+    1)) |>
+  step_mutate(`Above Ground Sighter Measurement` = 
+                as.factor(`Above Ground Sighter Measurement`)) |>
+  step_dummy(all_nominal_predictors()) |>
+  step_interact(terms = ~ Quaas:`Tail flags`) |>
+  step_zv(all_predictors())
+
+prep(squirrels_rec2) |>
+  bake(squirrels_train) |>
+  glimpse()
+```
+
+```{r}
+#| message: false
+#| error: false
+squirrels_workflow = workflow() |>
+  add_model(squirrels_spec) |>
+  add_recipe(squirrels_rec2)
+
+squirrels_cv2 <- squirrels_workflow |>
+  fit_resamples(resamples = folds,
+                control = control_resamples(extract = calc_model_stats)) 
+
+# assessment
+collect_metrics(squirrels_cv2, summarize = TRUE)
+```
+
+```{r}
+map_df(squirrels_cv2$.extracts, ~ .x[[1]][[1]]) |>
+  summarise(mean_aic = mean(AIC), 
+            mean_bic = mean(BIC))
+```
+
+Since Model 2 has a higher accuracy and AUC, as well as lower AIC and BIC, we will choose model 2.
+
+
 
 Your written report goes here!
 
