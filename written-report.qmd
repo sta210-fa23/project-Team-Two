@@ -147,12 +147,7 @@ squirrels
 
 Model 1 includes all variables stated in our hypothesis.
 
-Recipe for Model 1 steps:
-1. Change response variable into factors
-2. Map all "FALSE" in `Above Ground Sighter Measurement` variable to 0, then convert the variable type to integer.
-3. Create dummy variables for all nominal predictors
-4. Create interaction terms between `Quaas` and `Tail flags`
-5. Remove all variables with zero variance
+Recipe for Model 1 steps: 1. Change response variable into factors 2. Map all "FALSE" in `Above Ground Sighter Measurement` variable to 0, then convert the variable type to integer. 3. Create dummy variables for all nominal predictors 4. Create interaction terms between `Quaas` and `Tail flags` 5. Remove all variables with zero variance
 
 ```{r}
 #| message: false
@@ -163,7 +158,7 @@ squirrels_rec1 <- recipe(Indifferent ~ Activity_Score + Age +
                           `Above Ground Sighter Measurement` + 
                           Kuks + Quaas + Moans + `Tail flags` + 
                           `Tail twitches`,
-                    data = squirrels_train) |>
+                    data = squirrels_train, family = "binomial") |>
   step_mutate(Indifferent = as.factor(Indifferent)) |>
   step_mutate(`Above Ground Sighter Measurement` = ifelse(
     `Above Ground Sighter Measurement` == "FALSE", 0, 
@@ -178,7 +173,6 @@ prep(squirrels_rec1) |>
   bake(squirrels_train) |>
   glimpse()
 ```
-
 
 ```{r}
 calc_model_stats <- function(x) {
@@ -212,11 +206,7 @@ map_df(squirrels_cv1$.extracts, ~ .x[[1]][[1]]) |>
 
 As the EDA has shown, Activity score does not seem to have a relationship with `Indifferent`, so we take it out for Model 2.
 
-Recipe for Model 2 steps:
-1. Change response variable into factors
-2. Map all "FALSE" in `Above Ground Sighter Measurement` variable to 0, and not "FALSE" to 1, then convert the variable type to factors.
-3. Create dummy variables for all nominal predictors
-4. Remove all variables with zero variance
+Recipe for Model 2 steps: 1. Change response variable into factors 2. Map all "FALSE" in `Above Ground Sighter Measurement` variable to 0, and not "FALSE" to 1, then convert the variable type to factors. 3. Create dummy variables for all nominal predictors 4. Remove all variables with zero variance
 
 ```{r}
 #| message: false
@@ -227,7 +217,7 @@ squirrels_rec2 <- recipe(Indifferent ~ Age +
                           `Above Ground Sighter Measurement` + 
                           Kuks + Quaas + Moans + `Tail flags` + 
                           `Tail twitches`,
-                    data = squirrels_train) |>
+                    data = squirrels_train, family = "binomial") |>
   step_mutate(Indifferent = as.factor(Indifferent)) |>
   step_mutate(`Above Ground Sighter Measurement` = ifelse(
     `Above Ground Sighter Measurement` == "FALSE", 0, 
@@ -265,8 +255,6 @@ map_df(squirrels_cv2$.extracts, ~ .x[[1]][[1]]) |>
 ```
 
 Since Model 2 has a higher accuracy and AUC, as well as lower AIC and BIC, we will choose model 2.
-
-
 
 Your written report goes here!
 
