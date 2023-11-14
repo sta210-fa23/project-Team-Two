@@ -127,6 +127,9 @@ To explore the relationship between whether or not the squirrel is indifferent a
 The data dictionary can be found [here](https://github.com/sta210-fa23/project-Team-Two/blob/main/data/README.md).
 
 ```{r}
+#| message: false
+#| error: false
+#| echo: false
 set.seed(10)
 squirrels_split <- initial_split(squirrels, prop = 0.80)
 squirrels_train <- training(squirrels_split)
@@ -147,12 +150,12 @@ squirrels
 
 Model 1 includes all variables stated in our hypothesis.
 
-Recipe for Model 1 steps: 1. Change response variable into factors 2. Map all "FALSE" in `Above Ground Sighter Measurement` variable to 0, then convert the variable type to integer. 3. Create dummy variables for all nominal predictors 4. Create interaction terms between `Quaas` and `Tail flags` 5. Remove all variables with zero variance
+Recipe for Model 1 steps: 1. Change response variable into factors. 2. Map all "FALSE" in `Above Ground Sighter Measurement` variable to 0, then convert the variable type to integer. 3. Create dummy variables for all nominal predictors. 4. Create interaction terms between `Quaas` and `Tail flags` 5. Remove all variables with zero variance.
 
 ```{r}
 #| message: false
 #| error: false
-#| warning: false
+#| echo: false
 squirrels_rec1 <- recipe(Indifferent ~ Activity_Score + Age + 
                           `Primary Fur Color` + Location + 
                           `Above Ground Sighter Measurement` + 
@@ -160,6 +163,7 @@ squirrels_rec1 <- recipe(Indifferent ~ Activity_Score + Age +
                           `Tail twitches`,
                     data = squirrels_train, family = "binomial") |>
   step_mutate(Indifferent = as.factor(Indifferent)) |>
+  step_naomit(Indifferent) |>
   step_mutate(`Above Ground Sighter Measurement` = ifelse(
     `Above Ground Sighter Measurement` == "FALSE", 0, 
     `Above Ground Sighter Measurement`)) |>
@@ -175,6 +179,9 @@ prep(squirrels_rec1) |>
 ```
 
 ```{r}
+#| message: false
+#| error: false
+#| echo: false
 calc_model_stats <- function(x) {
   glance(extract_fit_parsnip(x)) |>
     select(AIC, BIC)
@@ -184,11 +191,12 @@ calc_model_stats <- function(x) {
 ```{r}
 #| message: false
 #| error: false
-squirrels_workflow = workflow() |>
+#| echo: false
+squirrels_workflow1 = workflow() |>
   add_model(squirrels_spec) |>
   add_recipe(squirrels_rec1)
 
-squirrels_cv1 <- squirrels_workflow |>
+squirrels_cv1 <- squirrels_workflow1 |>
   fit_resamples(resamples = folds,
                 control = control_resamples(extract = calc_model_stats)) 
 
@@ -197,6 +205,9 @@ collect_metrics(squirrels_cv1, summarize = TRUE)
 ```
 
 ```{r}
+#| message: false
+#| error: false
+#| echo: false
 map_df(squirrels_cv1$.extracts, ~ .x[[1]][[1]]) |>
   summarise(mean_aic = mean(AIC), 
             mean_bic = mean(BIC))
@@ -204,20 +215,20 @@ map_df(squirrels_cv1$.extracts, ~ .x[[1]][[1]]) |>
 
 ### Model 2
 
-As the EDA has shown, Activity score does not seem to have a relationship with `Indifferent`, so we take it out for Model 2.
+As the EDA has shown, Activity score does not seem to have a relationship with `Indifferent`, so we take it out for Model 2. In addition, there is a strong correlation between `Location` and `Above Ground Sighter Measurement`, so we omit `Location` because `Above Ground Sighter Measurement` is more granular.
 
 Recipe for Model 2 steps: 1. Change response variable into factors 2. Map all "FALSE" in `Above Ground Sighter Measurement` variable to 0, and not "FALSE" to 1, then convert the variable type to factors. 3. Create dummy variables for all nominal predictors 4. Remove all variables with zero variance
 
 ```{r}
 #| message: false
 #| error: false
-#| warning: false
-squirrels_rec2 <- recipe(Indifferent ~ Age + 
-                          `Primary Fur Color` + Location + 
+#| echo: false
+squirrels_rec2 <- recipe(Indifferent ~ Age + `Primary Fur Color`+
                           `Above Ground Sighter Measurement` + 
                           Kuks + Quaas + Moans + `Tail flags` + 
                           `Tail twitches`,
                     data = squirrels_train, family = "binomial") |>
+  step_naomit(Indifferent) |>
   step_mutate(Indifferent = as.factor(Indifferent)) |>
   step_mutate(`Above Ground Sighter Measurement` = ifelse(
     `Above Ground Sighter Measurement` == "FALSE", 0, 
@@ -236,11 +247,12 @@ prep(squirrels_rec2) |>
 ```{r}
 #| message: false
 #| error: false
-squirrels_workflow = workflow() |>
+#| echo: false
+squirrels_workflow2 = workflow() |>
   add_model(squirrels_spec) |>
   add_recipe(squirrels_rec2)
 
-squirrels_cv2 <- squirrels_workflow |>
+squirrels_cv2 <- squirrels_workflow2 |>
   fit_resamples(resamples = folds,
                 control = control_resamples(extract = calc_model_stats)) 
 
@@ -249,14 +261,33 @@ collect_metrics(squirrels_cv2, summarize = TRUE)
 ```
 
 ```{r}
+#| message: false
+#| error: false
+#| echo: false
 map_df(squirrels_cv2$.extracts, ~ .x[[1]][[1]]) |>
   summarise(mean_aic = mean(AIC), 
             mean_bic = mean(BIC))
 ```
 
-Since Model 2 has a higher accuracy and AUC, as well as lower AIC and BIC, we will choose model 2.
+Since Model 2 has a higher accuracy and AUC, as well as lower AIC and BIC, we will choose Model 2. Next, we fit the model to our testing data and examine the RMSE (help: not running)
 
-Your written report goes here!
+We fit the model to the entire squirrels dataset and interpret the coefficients.
+
+```{r}
+#| message: false
+#| error: false
+#| echo: false
+squirrels_fit <- squirrels_workflow2 |>
+  fit(data = squirrels)
+
+coeffs <- squirrels_fit |>
+  extract_fit_parsnip() |>
+  tidy()
+
+coeffs
+```
+
+Of all the variables we examined, `KuksTRUE`, `QuaasTRUE`, `Above Ground Sighter Measurement`, and the interaction between `KuksTRUE` and `Tail flagsTRUE` were the only terms that had coefficients with significant p-values. The odds that a squirrel is indifferent to a human is multiplied by a factor of `r round(exp(-0.2021 + -0.4836))` if it kuks and `r round(exp(-0.2021 + -0.7851))` if it quaas. For every additional 1 meter in the squirrel's location above ground, the predicted log odds that it is indifferent decreases by `-0.1817`. In other words, kuks, quaas, and being above ground decrease the odds that a squirrel is indifferent to humans. However, the interaction term between `KuksTRUE` and `Tail flagsTRUE` has a positive coefficient, meaning the presence of both kuks and tail flags increases the predicted odds that a squirrel is indifferent: specifically, by a factor of `r round(exp(2.682))`. This is an interesting result because in the scientific literature, both kuks and tail flags are used by squirrels to warn other squirrels of a potential ground threat, indicating that the squirrels do see human presence as a threat, yet are indifferent.
 
 ::: callout-important
 Before you submit, make sure your code chunks are turned off with `echo: false` and there are no warnings or messages with `warning: false` and `message: false` in the YAML.
