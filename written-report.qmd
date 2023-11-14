@@ -19,7 +19,7 @@ library("ggplot2")
 library("gridExtra")
 ```
 
-## Introduction
+# Introduction and Data
 
 As a result of the continuous human development, animals are inevitably interacting with humans more often. However, this form of interaction has mostly shown to be a disturbance to animals [\[1\]](https://www.jstor.org/stable/pdf/25177145.pdf). Animals see humans as a threat, so it is no surprise that they would treat the presence of humans the same way they would when they face other predators. Nevertheless, recent studies show that the squirrels actually act differently, as characterized by a phenomenon called synurbization, or the process of becoming urbanized [\[2\]](https://link.springer.com/article/10.1007/s11252-008-0060-0).
 
@@ -116,15 +116,17 @@ Since there were so few squirrels that approached the researchers, it is hard to
 
 An interaction that we would like to examine further is whether the presence of tail flags and/or twitches influences the likelihood that a squirrel is indifferent to humans. Another interaction to explore is how the interaction between tail flags and the number of activities would affect the squirrel's indifference towards humans.
 
-## Analysis approach
-
-The response variable is `Indifferent`, which is a categorical variable that indicates whether or not the squirrel is indifferent to humans. Potential predictors include `Activity_Score` (a quantitative variable that records the number of activities the squirrel is observed doing), `Age` (a categorical variable that indicates whether the squirrel is adult or juvenile), `Fur_Color` (categorical variable), `Location` (categorical variable), `Above_Ground_Measurement` (quantitative variable), sounds that the squirrels are making (categorical variables including `Kuks`, `Quaas`, and `Moans`), `Tail_flags` and `Tail_twitches`, which are also categorical.
-
-To explore the relationship between whether or not the squirrel is indifferent and the predictor variables, such as age category, location, distance above ground when spotted, number of activities the squirrel is observed doing, sound that the squirrel makes, and their tail signs, we plan to use logistic regression. We will compare logistic regression models using AIC and BIC to evaluate what predictor variables and what interactions between the variables should be included in the model to best predict the attitude of the squirrel towards humans. We will also perform 10-fold cross validation for model comparison and/or hyperparameter tuning and estimate its generalization ability.
-
 ## Data dictionary
 
 The data dictionary can be found [here](https://github.com/sta210-fa23/project-Team-Two/blob/main/data/README.md).
+
+# **Methodology**
+
+## Analysis approach
+
+Our response variable is `Indifferent`, which is a categorical variable that indicates whether or not the squirrel is indifferent to humans. Potential predictors include `Activity_Score` (a quantitative variable that records the number of activities the squirrel is observed doing), `Age` (a categorical variable that indicates whether the squirrel is adult or juvenile), `Fur_Color` (categorical variable), `Location` (categorical variable), `Above_Ground_Measurement` (quantitative variable), sounds that the squirrels are making (categorical variables including `Kuks`, `Quaas`, and `Moans`), `Tail_flags` and `Tail_twitches`, which are also categorical.
+
+To explore the relationship between whether or not the squirrel is indifferent and the predictor variables, such as age category, location, distance above ground when spotted, number of activities the squirrel is observed doing, sound that the squirrel makes, and their tail signs, we plan to use logistic regression. We are using logistic regression because our dependent variable, `Indifferent,` is categorical. We will compare logistic regression models using AIC and BIC to evaluate what predictor variables and what interactions between the variables should be included in the model to best predict the attitude of the squirrel towards humans. We will also perform 10-fold cross-validation for model comparison.
 
 ```{r}
 #| message: false
@@ -140,10 +142,6 @@ folds <- vfold_cv(squirrels_train, v = 10)
 
 squirrels_spec <- logistic_reg() |>
   set_engine("glm")
-```
-
-```{r}
-squirrels
 ```
 
 ### Model 1
@@ -268,6 +266,8 @@ map_df(squirrels_cv2$.extracts, ~ .x[[1]][[1]]) |>
   summarise(mean_aic = mean(AIC), 
             mean_bic = mean(BIC))
 ```
+
+# Results
 
 Since Model 2 has a higher accuracy and AUC, as well as lower AIC and BIC, we will choose Model 2. Next, we fit the model to our testing data and examine the RMSE (help: not running)
 
