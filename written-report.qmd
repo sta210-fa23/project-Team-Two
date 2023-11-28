@@ -37,8 +37,6 @@ The dataset has 3023 observations and 31 variables, and it gives a wide range of
 
 ## Initial exploratory data analysis
 
-`{r} #| message: false #| warning: false} squirrels <- read_csv("data/squirrel_data.csv")`
-
 We create a numeric variable named Activity_Score that encapsulates the number of activities a squirrel is engaged in during the span of observation. The distribution of the Activity_Score variable is unimodal, slightly right skewed, and has a median of 1. This means that most squirrels in the data set were only engaged in 1 activity during the span of observation.
 
 ```{r}
@@ -51,10 +49,6 @@ activities <- squirrels |>
          Eating = ifelse(Eating == TRUE, 1, 0),
          Foraging = ifelse(Foraging == TRUE, 1, 0)) 
 squirrels$Activity_Score <- rowSums(activities)
-squirrels = squirrels |>
-  filter(!is.na(Indifferent))
-squirrels$Indifferent <- factor(squirrels$Indifferent)
-
 ```
 
 ```{r}
@@ -69,6 +63,7 @@ summary(squirrels$Activity_Score)
 
 ```{r}
 dist_response <- squirrels |>
+  mutate(Indifferent = ifelse(Indifferent == TRUE, "Indifferent", "Not Indifferent")) |>
   ggplot(aes(x = Indifferent)) +
   geom_bar(fill = "brown") +
   labs(title = "Distribution of Indifference",
@@ -78,6 +73,7 @@ dist_response <- squirrels |>
 
 ```{r}
 dist_approach <- squirrels |>
+  mutate(Indifferent = ifelse(Indifferent == TRUE, "Indifferent", "Not Indifferent")) |>
   ggplot(aes(x = Approaches)) +
   geom_bar(fill = "brown") +
   labs(title = "Distribution of Whether or not Squirrels Approach Humans",
@@ -87,6 +83,7 @@ dist_approach <- squirrels |>
 
 ```{r}
 indiff_activity_graph <- squirrels |>
+  mutate(Indifferent = ifelse(Indifferent == TRUE, "Indifferent", "Not Indifferent")) |>
   ggplot(aes(x = Activity_Score)) +
   geom_bar(fill = "brown") +
   facet_wrap(~ Indifferent) +
@@ -97,6 +94,7 @@ indiff_activity_graph <- squirrels |>
 
 ```{r}
 approach_activity_graph <- squirrels |> 
+  mutate(Approaches = ifelse(Approaches == TRUE, "Approach", "Not Approach")) |>
   ggplot(aes(x = Activity_Score)) + 
   geom_bar(fill = "brown") +
   facet_wrap(~ Approaches) +
@@ -118,7 +116,20 @@ The distribution of `Activity_Score` for squirrels that were indifferent vs. not
 
 Since there were so few squirrels that approached the researchers, it is hard to tell whether the graphs are very different in shape. The difference may be something that we explore further.
 
-An interaction that we would like to examine further is whether the presence of tail flags and/or twitches influences the likelihood that a squirrel is indifferent to humans. Another interaction to explore is how the interaction between tail flags and the number of activities would affect the squirrel's indifference towards humans.
+An interaction that we would like to examine further is whether the presence of tail activities, specifically `tail flags`, when interacting with `Quaas`, influences the likelihood that a squirrel is indifferent to humans. When squirrels flag their tails, the motion exaggerates their size and is used to confuse rivals or predators. When squirrels are heard quaaing, they are making an elongated vocal communication to indicate the presence of a ground predator. Therefore, seeing the interaction between tail flags and quaas could help us understand whether or not the squirrels are indifferent to humans or not.
+
+```{r}
+
+squirrels |>
+  mutate(interact_true = ifelse(`Tail flags`== TRUE & Quaas == TRUE, TRUE, FALSE)) |>
+  mutate(Indifferent = ifelse(Indifferent == TRUE, "Indifferent", "Not Indifferent")) |>
+  ggplot(aes(x = interact_true)) +
+  geom_bar() +
+  facet_wrap(~Indifferent) +
+  labs(x = "Interaction between Quaas and Tail Flags",
+       y = "Count",
+       title = "Interaction Effect between Tail Flags and Quaas in Indifferent Or Not")
+```
 
 ## Data dictionary
 
@@ -288,12 +299,9 @@ The data are not spatially or time correlated since the data were collected in o
 
 Thus, all model conditions for logistic regression is satisfied.
 
-
 # Results
 
-Since Model 2 has a higher accuracy and AUC, as well as lower AIC and BIC, we will choose Model 2. Next, we fit the model to our testing data and examine the RMSE (help: not running)
-
-We fit the model to the entire squirrels dataset and interpret the coefficients.
+Since Model 2 has a higher accuracy and AUC, as well as lower AIC and BIC, we will choose Model 2. Next, we fit the model to the entire squirrels dataset and interpret the coefficients.
 
 ```{r}
 #| message: false
@@ -331,6 +339,293 @@ squirrels_pred |>
     .pred_TRUE,
     event_level = "second"
   )
+```
+
+Of all the variables we examined, `KuksTRUE`, `QuaasTRUE`, `Above Ground Sighter Measurement`, and the interaction between `KuksTRUE` and `Tail flagsTRUE` were the only terms that had coefficients with significant p-values. The odds that a squirrel is indifferent to a human is multiplied by a factor of `r round(exp(-0.2021 + -0.4836))` if it kuks and `r round(exp(-0.2021 + -0.7851))` if it quaas. For every additional 1 meter in the squirrel's location above ground, the predicted log odds that it is indifferent decreases by `-0.1817`. In other words, kuks, quaas, and being above ground decrease the odds that a squirrel is indifferent to humans. However, the interaction term between `KuksTRUE` and `Tail flagsTRUE` has a positive coefficient, meaning the presence of both kuks and tail flags increases the predicted odds that a squirrel is indifferent: specifically, by a factor of `r round(exp(2.682))`. This is an interesting result because in the scientific literature, both kuks and tail flags are used by squirrels to warn other squirrels of a potential ground threat, indicating that the squirrels do see human presence as a threat, yet are indifferent.
+
+::: callout-important
+Before you submit, make sure your code chunks are turned off with `echo: false` and there are no warnings or messages with `warning: false` and `message: false` in the YAML.
+:::
+
+# Introduction and Data
+
+As a result of the continuous human development, animals are inevitably interacting with humans more often. However, this form of interaction has mostly shown to be a disturbance to animals [\[1\]](https://www.jstor.org/stable/pdf/25177145.pdf). Animals see humans as a threat, so it is no surprise that they would treat the presence of humans the same way they would when they face other predators. Nevertheless, recent studies show that the squirrels actually act differently, as characterized by a phenomenon called synurbization, or the process of becoming urbanized [\[2\]](https://link.springer.com/article/10.1007/s11252-008-0060-0).
+
+In an effort to investigate these two competing theories, and to better understand the dynamic between squirrels and humans, we carry out this research project to explore what factors affect whether a squirrel is indifferent to human presence. From there, we would like to deduce whether the squirrels' attitude to humans are caused by human presence or other factors such as their species.
+
+We hypothesize that the age category, location, distance above ground when spotted, number of activities that the squirrel was doing, sound that the squirrel makes, and whether squirrel is disturbed by human activities (as measured by features like approaching or running away from humans and tail signs) could have a relationship with the attitude of the squirrel (whether indifferent or not).
+
+## Data description
+
+We are sourcing our data set from the TidyTuesday project on GitHub. Their data originally came from The 2018 Squirrel Census, a project based on the sightings of squirrels in Central Park, New York City.
+
+In October of 2018, the Squirrel Census Team and a group of over 300 volunteers collected the data based on squirrel sightings around Central Park.
+
+The dataset has 3023 observations and 31 variables, and it gives a wide range of observations and characteristics. It first gives us the location, in both longitude and latitude, the hectare of the park the squirrel was located in, the date, and whether it was found in the AM or PM. It also assigns each squirrel a unique ID. It has information on whether the squirrel is an adult or a juvenile, its primary and highlight fur colors, and has a number for the sequence of sightings in one session. It also contains data on their exact location, their distance from the ground, and the objects they were found on. There is data for the activities the squirrel was found doing, ranging from running to foraging, with a separate column for any activity that was not chosen to be a column. It gives data on the sounds the squirrel made and tail movements, if any. Finally, it has 4 columns for the squirrel's response when facing humans, being either that the squirrel approached, was indifferent, ran away, or any other action.
+
+## Initial exploratory data analysis
+
+We create a numeric variable named Activity_Score that encapsulates the number of activities a squirrel is engaged in during the span of observation. The distribution of the Activity_Score variable is unimodal, slightly right skewed, and has a median of 1. This means that most squirrels in the data set were only engaged in 1 activity during the span of observation.
+
+```{r}
+squirrels <- read_csv("data/squirrel_data.csv")
+activities <- squirrels |>   
+  select(c(Running, Chasing, Climbing, Eating, Foraging)) |>
+  mutate(Running = ifelse(Running == TRUE, 1, 0),
+         Chasing = ifelse(Chasing == TRUE, 1, 0),
+         Climbing = ifelse(Climbing == TRUE, 1, 0),
+         Eating = ifelse(Eating == TRUE, 1, 0),
+         Foraging = ifelse(Foraging == TRUE, 1, 0)) 
+squirrels$Activity_Score <- rowSums(activities)
+```
+
+```{r}
+dist_activity <- squirrels |>
+  ggplot(aes(x = Activity_Score)) +
+  geom_bar(fill = "brown") +
+  labs(title = "Spread of Activity Scores",
+       x = "Activity Score",
+       y = "Frequency") 
+summary(squirrels$Activity_Score)
+```
+
+```{r}
+dist_response <- squirrels |>
+  mutate(Indifferent = ifelse(Indifferent == TRUE, "Indifferent", "Not Indifferent")) |>
+  ggplot(aes(x = Indifferent)) +
+  geom_bar(fill = "brown") +
+  labs(title = "Distribution of Indifference",
+       x = "Indifference",
+       y = "Frequency")
+```
+
+```{r}
+dist_approach <- squirrels |>
+  mutate(Indifferent = ifelse(Indifferent == TRUE, "Indifferent", "Not Indifferent")) |>
+  ggplot(aes(x = Approaches)) +
+  geom_bar(fill = "brown") +
+  labs(title = "Distribution of Whether or not Squirrels Approach Humans",
+       x = "Whether Squirrel Approaches",
+       y = "Frequency")
+```
+
+```{r}
+indiff_activity_graph <- squirrels |>
+  mutate(Indifferent = ifelse(Indifferent == TRUE, "Indifferent", "Not Indifferent")) |>
+  ggplot(aes(x = Activity_Score)) +
+  geom_bar(fill = "brown") +
+  facet_wrap(~ Indifferent) +
+  labs(title = "Indifference vs. Activity Score",
+       x = "Activity Score",
+       y = "Frequency")
+```
+
+```{r}
+approach_activity_graph <- squirrels |> 
+  mutate(Approaches = ifelse(Approaches == TRUE, "Approach", "Not Approach")) |>
+  ggplot(aes(x = Activity_Score)) + 
+  geom_bar(fill = "brown") +
+  facet_wrap(~ Approaches) +
+  labs(title = "Approach vs. Activity Score",
+       x = "Activity Score",
+       y = "Frequency")
+```
+
+```{r}
+grid.arrange(dist_activity, dist_response, dist_approach, nrow = 2) 
+grid.arrange(indiff_activity_graph, approach_activity_graph, nrow = 2)
+```
+
+There seems to be roughly equal number of squirrels that were and weren't indifferent to the humans.
+
+There were far fewer squirrels that approached humans than squirrels that didn't. This could show that they are not as synurbanized as we thought.
+
+The distribution of `Activity_Score` for squirrels that were indifferent vs. not indifferent is roughly the same shape. Therefore, activity score and indifference do not seem to be correlated.
+
+Since there were so few squirrels that approached the researchers, it is hard to tell whether the graphs are very different in shape. The difference may be something that we explore further.
+
+An interaction that we would like to examine further is whether the presence of tail activities, specifically `tail flags`, when interacting with `Quaas`, influences the likelihood that a squirrel is indifferent to humans. When squirrels flag their tails, the motion exaggerates their size and is used to confuse rivals or predators. When squirrels are heard quaaing, they are making an elongated vocal communication to indicate the presence of a ground predator. Therefore, seeing the interaction between tail flags and quaas could help us understand whether or not the squirrels are indifferent to humans or not.
+
+```{r}
+
+squirrels |>
+  mutate(interact_true = ifelse(`Tail flags`== TRUE & Quaas == TRUE, TRUE, FALSE)) |>
+  mutate(Indifferent = ifelse(Indifferent == TRUE, "Indifferent", "Not Indifferent")) |>
+  ggplot(aes(x = interact_true)) +
+  geom_bar() +
+  facet_wrap(~Indifferent) +
+  labs(x = "Interaction between Quaas and Tail Flags",
+       y = "Count",
+       title = "Interaction Effect between Tail Flags and Quaas in Indifferent Or Not")
+```
+
+## Data dictionary
+
+The data dictionary can be found [here](https://github.com/sta210-fa23/project-Team-Two/blob/main/data/README.md).
+
+# **Methodology**
+
+## Analysis approach
+
+Our response variable is `Indifferent`, which is a categorical variable that indicates whether or not the squirrel is indifferent to humans. Potential predictors include `Activity_Score` (a quantitative variable that records the number of activities the squirrel is observed doing), `Age` (a categorical variable that indicates whether the squirrel is adult or juvenile), `Fur_Color` (categorical variable), `Location` (categorical variable), `Above_Ground_Measurement` (quantitative variable), sounds that the squirrels are making (categorical variables including `Kuks`, `Quaas`, and `Moans`), `Tail_flags` and `Tail_twitches`, which are also categorical.
+
+To explore the relationship between whether or not the squirrel is indifferent and the predictor variables, such as age category, location, distance above ground when spotted, number of activities the squirrel is observed doing, sound that the squirrel makes, and their tail signs, we plan to use logistic regression. We are using logistic regression because our dependent variable, `Indifferent,` is categorical. We will compare logistic regression models using AIC and BIC to evaluate what predictor variables and what interactions between the variables should be included in the model to best predict the attitude of the squirrel towards humans. We will also perform 10-fold cross-validation for model comparison.
+
+```{r}
+#| message: false
+#| error: false
+#| echo: false
+set.seed(10)
+squirrels_split <- initial_split(squirrels, prop = 0.80)
+squirrels_train <- training(squirrels_split)
+squirrels_test  <- testing(squirrels_split)
+
+set.seed(10)
+folds <- vfold_cv(squirrels_train, v = 10)
+
+squirrels_spec <- logistic_reg() |>
+  set_engine("glm")
+```
+
+### Model 1
+
+Model 1 includes all variables stated in our hypothesis.
+
+Recipe for Model 1 steps: 1. Change response variable into factors. 2. Map all "FALSE" in `Above Ground Sighter Measurement` variable to 0, then convert the variable type to integer. 3. Create dummy variables for all nominal predictors. 4. Create interaction terms between `Quaas` and `Tail flags` 5. Remove all variables with zero variance.
+
+```{r}
+#| message: false
+#| error: false
+#| echo: false
+squirrels_rec1 <- recipe(Indifferent ~ Activity_Score + Age + 
+                          `Primary Fur Color` + Location + 
+                          `Above Ground Sighter Measurement` + 
+                          Kuks + Quaas + Moans + `Tail flags` + 
+                          `Tail twitches`,
+                    data = squirrels_train, family = "binomial") |>
+  step_mutate(Indifferent = as.factor(Indifferent)) |>
+  step_naomit(Indifferent) |>
+  step_mutate(`Above Ground Sighter Measurement` = ifelse(
+    `Above Ground Sighter Measurement` == "FALSE", 0, 
+    `Above Ground Sighter Measurement`)) |>
+  step_mutate(`Above Ground Sighter Measurement` = 
+                as.integer(`Above Ground Sighter Measurement`)) |>
+  step_dummy(all_nominal_predictors()) |>
+  step_interact(terms = ~ Quaas:`Tail flags`) |>
+  step_zv(all_predictors())
+
+prep(squirrels_rec1) |>
+  bake(squirrels_train) |>
+  glimpse()
+```
+
+```{r}
+#| message: false
+#| error: false
+#| echo: false
+calc_model_stats <- function(x) {
+  glance(extract_fit_parsnip(x)) |>
+    select(AIC, BIC)
+}
+```
+
+```{r}
+#| message: false
+#| error: false
+#| echo: false
+squirrels_workflow1 = workflow() |>
+  add_model(squirrels_spec) |>
+  add_recipe(squirrels_rec1)
+
+squirrels_cv1 <- squirrels_workflow1 |>
+  fit_resamples(resamples = folds,
+                control = control_resamples(extract = calc_model_stats)) 
+
+# assessment
+collect_metrics(squirrels_cv1, summarize = TRUE)
+```
+
+```{r}
+#| message: false
+#| error: false
+#| echo: false
+map_df(squirrels_cv1$.extracts, ~ .x[[1]][[1]]) |>
+  summarise(mean_aic = mean(AIC), 
+            mean_bic = mean(BIC))
+```
+
+### Model 2
+
+As the EDA has shown, Activity score does not seem to have a relationship with `Indifferent`, so we take it out for Model 2. In addition, there is a strong correlation between `Location` and `Above Ground Sighter Measurement`, so we omit `Location` because `Above Ground Sighter Measurement` is more granular.
+
+Recipe for Model 2 steps: 1. Change response variable into factors 2. Map all "FALSE" in `Above Ground Sighter Measurement` variable to 0, and not "FALSE" to 1, then convert the variable type to factors. 3. Create dummy variables for all nominal predictors 4. Remove all variables with zero variance
+
+```{r}
+#| message: false
+#| error: false
+#| echo: false
+squirrels_rec2 <- recipe(Indifferent ~ Age + `Primary Fur Color`+
+                          `Above Ground Sighter Measurement` + 
+                          Kuks + Quaas + Moans + `Tail flags` + 
+                          `Tail twitches`,
+                    data = squirrels_train, family = "binomial") |>
+  step_naomit(Indifferent) |>
+  step_mutate(Indifferent = as.factor(Indifferent)) |>
+  step_mutate(`Above Ground Sighter Measurement` = ifelse(
+    `Above Ground Sighter Measurement` == "FALSE", 0, 
+    1)) |>
+  step_mutate(`Above Ground Sighter Measurement` = 
+                as.factor(`Above Ground Sighter Measurement`)) |>
+  step_dummy(all_nominal_predictors()) |>
+  step_interact(terms = ~ Quaas:`Tail flags`) |>
+  step_zv(all_predictors())
+
+prep(squirrels_rec2) |>
+  bake(squirrels_train) |>
+  glimpse()
+```
+
+```{r}
+#| message: false
+#| error: false
+#| echo: false
+squirrels_workflow2 = workflow() |>
+  add_model(squirrels_spec) |>
+  add_recipe(squirrels_rec2)
+
+squirrels_cv2 <- squirrels_workflow2 |>
+  fit_resamples(resamples = folds,
+                control = control_resamples(extract = calc_model_stats)) 
+
+# assessment
+collect_metrics(squirrels_cv2, summarize = TRUE)
+```
+
+```{r}
+#| message: false
+#| error: false
+#| echo: false
+map_df(squirrels_cv2$.extracts, ~ .x[[1]][[1]]) |>
+  summarise(mean_aic = mean(AIC), 
+            mean_bic = mean(BIC))
+```
+
+# Results
+
+Since Model 2 has a higher accuracy and AUC, as well as lower AIC and BIC, we will choose Model 2. Next, we fit the model to the entire squirrels dataset and interpret the coefficients.
+
+```{r}
+#| message: false
+#| error: false
+#| echo: false
+squirrels_fit <- squirrels_workflow2 |>
+  fit(data = squirrels)
+
+coeffs <- squirrels_fit |>
+  extract_fit_parsnip() |>
+  tidy()
+
+coeffs
 ```
 
 Of all the variables we examined, `KuksTRUE`, `QuaasTRUE`, `Above Ground Sighter Measurement`, and the interaction between `KuksTRUE` and `Tail flagsTRUE` were the only terms that had coefficients with significant p-values. The odds that a squirrel is indifferent to a human is multiplied by a factor of `r round(exp(-0.2021 + -0.4836))` if it kuks and `r round(exp(-0.2021 + -0.7851))` if it quaas. For every additional 1 meter in the squirrel's location above ground, the predicted log odds that it is indifferent decreases by `-0.1817`. In other words, kuks, quaas, and being above ground decrease the odds that a squirrel is indifferent to humans. However, the interaction term between `KuksTRUE` and `Tail flagsTRUE` has a positive coefficient, meaning the presence of both kuks and tail flags increases the predicted odds that a squirrel is indifferent: specifically, by a factor of `r round(exp(2.682))`. This is an interesting result because in the scientific literature, both kuks and tail flags are used by squirrels to warn other squirrels of a potential ground threat, indicating that the squirrels do see human presence as a threat, yet are indifferent.
