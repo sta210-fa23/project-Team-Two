@@ -51,6 +51,10 @@ activities <- squirrels |>
          Eating = ifelse(Eating == TRUE, 1, 0),
          Foraging = ifelse(Foraging == TRUE, 1, 0)) 
 squirrels$Activity_Score <- rowSums(activities)
+squirrels = squirrels |>
+  filter(!is.na(Indifferent))
+squirrels$Indifferent <- factor(squirrels$Indifferent)
+
 ```
 
 ```{r}
@@ -160,8 +164,8 @@ squirrels_rec1 <- recipe(Indifferent ~ Activity_Score + Age +
                           Kuks + Quaas + Moans + `Tail flags` + 
                           `Tail twitches`,
                     data = squirrels_train, family = "binomial") |>
-  step_mutate(Indifferent = as.factor(Indifferent)) |>
   step_naomit(Indifferent) |>
+  step_mutate(Indifferent = as.factor(Indifferent)) |>
   step_mutate(`Above Ground Sighter Measurement` = ifelse(
     `Above Ground Sighter Measurement` == "FALSE", 0, 
     `Above Ground Sighter Measurement`)) |>
@@ -227,7 +231,6 @@ squirrels_rec2 <- recipe(Indifferent ~ Age + `Primary Fur Color`+
                           `Tail twitches`,
                     data = squirrels_train, family = "binomial") |>
   step_naomit(Indifferent) |>
-  step_mutate(Indifferent = as.factor(Indifferent)) |>
   step_mutate(`Above Ground Sighter Measurement` = ifelse(
     `Above Ground Sighter Measurement` == "FALSE", 0, 
     1)) |>
@@ -285,6 +288,30 @@ coeffs <- squirrels_fit |>
   tidy()
 
 coeffs
+```
+
+```{r}
+squirrels_pred <- predict(squirrels_fit, squirrels_test, type = "prob") |> 
+  bind_cols(squirrels_test) 
+squirrels_pred
+
+```
+
+```{r}
+squirrels_pred |>
+  roc_curve(
+    truth = Indifferent,
+    .pred_TRUE,
+    event_level = "second"
+  ) |>
+  autoplot()
+
+squirrels_pred |>
+  roc_auc(
+    truth = Indifferent,
+    .pred_TRUE,
+    event_level = "second"
+  )
 ```
 
 Of all the variables we examined, `KuksTRUE`, `QuaasTRUE`, `Above Ground Sighter Measurement`, and the interaction between `KuksTRUE` and `Tail flagsTRUE` were the only terms that had coefficients with significant p-values. The odds that a squirrel is indifferent to a human is multiplied by a factor of `r round(exp(-0.2021 + -0.4836))` if it kuks and `r round(exp(-0.2021 + -0.7851))` if it quaas. For every additional 1 meter in the squirrel's location above ground, the predicted log odds that it is indifferent decreases by `-0.1817`. In other words, kuks, quaas, and being above ground decrease the odds that a squirrel is indifferent to humans. However, the interaction term between `KuksTRUE` and `Tail flagsTRUE` has a positive coefficient, meaning the presence of both kuks and tail flags increases the predicted odds that a squirrel is indifferent: specifically, by a factor of `r round(exp(2.682))`. This is an interesting result because in the scientific literature, both kuks and tail flags are used by squirrels to warn other squirrels of a potential ground threat, indicating that the squirrels do see human presence as a threat, yet are indifferent.
