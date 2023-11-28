@@ -234,8 +234,6 @@ squirrels_rec2 <- recipe(Indifferent ~ Age + `Primary Fur Color`+
   step_mutate(`Above Ground Sighter Measurement` = ifelse(
     `Above Ground Sighter Measurement` == "FALSE", 0, 
     1)) |>
-  step_mutate(`Above Ground Sighter Measurement` = 
-                as.factor(`Above Ground Sighter Measurement`)) |>
   step_dummy(all_nominal_predictors()) |>
   step_interact(terms = ~ Quaas:`Tail flags`) |>
   step_zv(all_predictors())
