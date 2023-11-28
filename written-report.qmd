@@ -270,6 +270,25 @@ map_df(squirrels_cv2$.extracts, ~ .x[[1]][[1]]) |>
             mean_bic = mean(BIC))
 ```
 
+## Model Conditions
+
+We will check model conditions for Model 2 since this is the better performing model due to higher accuracy and AUC and lower AIC and BIC.
+
+**Linearity**
+
+There are no numeric variables in Model 2, so linearity is satisfied.
+
+**Randomness**
+
+The data was collected from the sightings of squirrels in Central Park, NYC from a group of volunteers. Although the volunteers are not randomly sampled, the sample of squirrels can be considered as random since we do not have reason to believe that the squirrels collected in this study differ systematically from squirrels in the rest of the world in regards to their indifference to humans. Therefore, randomness is satisfied.
+
+**Independence**
+
+The data are not spatially or time correlated since the data were collected in one time snapshot and in one location. Therefore, we have no reason to believe that independence was violated.
+
+Thus, all model conditions for logistic regression is satisfied.
+
+
 # Results
 
 Since Model 2 has a higher accuracy and AUC, as well as lower AIC and BIC, we will choose Model 2. Next, we fit the model to our testing data and examine the RMSE (help: not running)
