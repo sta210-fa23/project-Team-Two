@@ -243,7 +243,7 @@ map_df(squirrels_cv1$.extracts, ~ .x[[1]][[1]]) |>
 
 ### Model 2
 
-As the EDA has shown, `Activity_Score` does not seem to have a relationship with `Indifferent`, so we take it out for Model 2. We conduct a drop-in-deviance test that confirms that the coefficient of `Activity_Score` is not statistically significant from 0 because the p-value of the test 0.72 > 0.05.
+As the EDA has shown, `Activity_Score` does not seem to have a relationship with `Indifferent`, so we take it out for Model 2. We conduct a drop-in-deviance test that confirms that the coefficient of `Activity_Score` is not statistically significant from 0 because the p-value of the test 0.72 \> 0.05.
 
 Recipe for Model 2 steps: 1. Change response variable into factors 2. Map all "FALSE" in `Above Ground Sighter Measurement` variable to 0, and not "FALSE" to 1, then convert the variable type to factors. 3. Create dummy variables for all nominal predictors 4. Remove all variables with zero variance.
 
@@ -308,7 +308,6 @@ test_stat <- dev_reduced - dev_full
 pchisq(test_stat, 3, lower.tail = FALSE) 
 ```
 
-
 ## Model Conditions
 
 We will check model conditions for Model 2 since this is the better performing model due to higher accuracy and AUC and lower AIC and BIC.
@@ -368,7 +367,7 @@ coeffs |>
 #| error: false
 #| echo: false
 #| warning: false
-squirrels_pred <- predict(squirrels_fit, squirrels_test, type = "prob") |> 
+squirrels_pred <- predict(squirrels_fit_red, squirrels_test, type = "prob") |>
   bind_cols(squirrels_test)
 ```
 
@@ -404,7 +403,3 @@ In this paper, we have investigated which factors significantly affect whether a
 One important limitations is the concerns about the way data is collected. For example, based on the data description, the data is collected from volunteer sighting in NYC. This might introduce some lack of rigorousness, especially when it comes to numeric variables like `Above Ground Sighter Measurement` since the volunteers might give a very subjective estimation of the height above the ground when standing and observing from distance. In addition, there are a lot of NA's in the dataset, which to some extent limits our ability to do analysis.
 
 For future work, we will try to extract more useful predictors from feature selection and feature engineering steps in order to increase the predictive power of our model. For example, instead of simply dropping the longitude and latitude from the dataset, we could potentially search the longitude and latitude of downtown NYC and use this information to calculate the Euclidean distance (or perhaps Manhattan distance since it's in NYC) between each observation and the city center for the model. In addition, we could try some non-linear machine learning models, such as random forest and boosting, since the linear model seem not to be able to give accurate predictions in this case.
-
-::: callout-important
-Before you submit, make sure your code chunks are turned off with `echo: false` and there are no warnings or messages with `warning: false` and `message: false` in the YAML.
-:::
