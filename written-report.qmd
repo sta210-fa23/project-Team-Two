@@ -301,7 +301,26 @@ We will check model conditions for Model 2 since this is the better performing m
 
 **Linearity**
 
-There are no numeric variables in Model 2, so linearity is satisfied.
+There is one numeric variable in Model 2, Above Ground Sighter Measurement.
+
+```{r}
+squirrels |> 
+  mutate(above_bin = cut_interval(as.numeric(`Above Ground Sighter Measurement`), n = 10)) |>
+  group_by(above_bin) |>
+  mutate(mean_above = mean(as.numeric(`Above Ground Sighter Measurement`))) |>
+  count(mean_above, Indifferent) |>
+  mutate(prop = n/sum(n)) |>
+  filter(Indifferent == TRUE) |>
+  mutate(emp_logit = log(prop/(1-prop))) |>
+  ggplot(aes(x = mean_above, y = emp_logit)) + 
+  geom_point() + 
+  geom_smooth(method = "lm", se = FALSE) +
+  labs(x = "Mean Above Ground Sighter Measurement", 
+       y = "Empirical logit")
+
+```
+
+The linearity condition is not satisfied. There is not a linear relationship between the empirical logit and the predictor variable of Above Ground Sighter Measurement. We could fix this condition if we had more specific data with fewer NA values. Additionally, since we converted the false values to zeros, that may have led to the variable not having a linear relationship with the empirical logit. Because the condition is not satisfied, the coefficients and p-value for Above Ground Sighter Measurement in our model may not be accurate, and we are unable to conclude if Above Ground Sighter Measurement is a significant predictor.
 
 **Randomness**
 
