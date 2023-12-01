@@ -310,10 +310,60 @@ kable(pchisq(test_stat, 3, lower.tail = FALSE), col.names = c("Drop-in-deviance 
 
 ### Multicollinearity
 
+```{r}
+#| message: false
+#| error: false
+#| echo: false
+
+model <- squirrels_fit_red |>
+  extract_fit_parsnip()
+```
+
+
 
 ```{r}
+#| message: false
+#| error: false
+#| echo: false
 library(rms)
-vif(squirrels_fit_full$fit)
+kable(vif(model$fit), col.names = c('VIF'), caption = "VIF Table of Predictors")
+```
+
+```{r}
+#| message: false
+#| error: false
+#| echo: false
+tidy(model) |> kable(digits = 3, caption = "Model 2 Outputs")
+```
+
+
+From the VIF table, only the variable `Age` has concerning VIF values (greater than 10). According to the model output, both levels of `Age` have very high p-values, which shows that this variable is not significant in predicting the response variable. Therefore, we can just drop `Age` from the model.
+
+```{r}
+#| message: false
+#| error: false
+#| echo: false
+squirrels_rec3 <- recipe(Indifferent ~ `Primary Fur Color` +
+                          `Above Ground Sighter Measurement` + 
+                          Kuks + Quaas + Moans + `Tail flags` + 
+                          `Tail twitches`,
+                    data = squirrels_train, family = "binomial") |>
+  step_naomit(Indifferent) |>
+  step_mutate(`Above Ground Sighter Measurement` = ifelse(
+    `Above Ground Sighter Measurement` == "FALSE", 0, 
+    `Above Ground Sighter Measurement`)) |>
+  step_mutate(`Above Ground Sighter Measurement` = 
+                as.integer(`Above Ground Sighter Measurement`)) |>
+  step_dummy(all_nominal_predictors()) |>
+  step_interact(terms = ~ Quaas:`Tail flags`) |>
+  step_zv(all_predictors())
+
+squirrels_workflow3 = workflow() |>
+  add_model(squirrels_spec) |>
+  add_recipe(squirrels_rec3)
+
+squirrels_fit_final <- squirrels_workflow3 |>
+  fit(data = squirrels_train)
 ```
 
 
@@ -364,7 +414,7 @@ Since Model 2 has a higher accuracy and AUC, as well as lower AIC and BIC, we wi
 #| error: false
 #| echo: false
 #| warning: false
-coeffs <- squirrels_fit_red |>
+coeffs <- squirrels_fit_final |>
   extract_fit_parsnip() |>
   tidy()
 
@@ -377,7 +427,7 @@ coeffs |>
 #| error: false
 #| echo: false
 #| warning: false
-squirrels_pred <- predict(squirrels_fit_red, squirrels_test, type = "prob") |>
+squirrels_pred <- predict(squirrels_fit_final, squirrels_test, type = "prob") |>
   bind_cols(squirrels_test)
 ```
 
@@ -402,9 +452,9 @@ squirrels_pred |>
   conf_mat(truth = Indifferent, estimate = Indifferent_predicted)
 ```
 
-Of all the variables we examined, `KuksTRUE`, `QuaasTRUE`, `Above Ground Sighter Measurement` were the only terms that had coefficients with significant p-values. The odds that a squirrel is indifferent to a human is multiplied by a factor of `r round(exp(-0.542), 3)` ($\exp(-0.542)$) if it kuks and `r round(exp(-0.908), 3)` ($\exp(-0.908)$) if it quaas, holding all else constant. For every additional 1 meter in the squirrel's location above ground, the odds that it is indifferent is multiplied by a factor of `r round(exp(-0.011), 3)` ($\exp(-0.011)$), holding all else constant. In other words, kuks, quaas, and being above ground decrease the odds that a squirrel is indifferent to humans. However, the interaction term between `KuksTRUE` and `Tail flagsTRUE` does not have a significant coefficient, meaning that whether a squirrel kuks or not does not influence the value of the coefficient for `Above Ground Sighter Measurement`.
+Of all the variables we examined, `KuksTRUE`, `QuaasTRUE`, `Above Ground Sighter Measurement` were the only terms that had coefficients with significant p-values. The odds that a squirrel is indifferent to a human is multiplied by a factor of `r round(exp(-0.576), 3)` ($\exp(-0.576)$) if it kuks and `r round(exp(-0.897), 3)` ($\exp(-0.897)$) if it quaas, holding all else constant. For every additional 1 meter in the squirrel's location above ground, the odds that it is indifferent is multiplied by a factor of `r round(exp(-0.011), 3)` ($\exp(-0.011)$), holding all else constant. In other words, kuks, quaas, and being above ground decrease the odds that a squirrel is indifferent to humans. 
 
-The model does not have a high predictive power as shown by the low AUC (0.512) and accuracy ((113+179) / (113 + 124 + 145 + 179) = `r round((113+179) / (113 + 124 + 145 + 179), 3)`). This is somewhat expected given what we saw in the EDA section, where the distribution of the predictors is either similar across the two levels of response or very imbalanced.
+The model does not have a high predictive power as shown by the low AUC (0.515) and accuracy ((112+177) / (112 + 130 + 155 + 177) = `r round((112+177) / (112 + 130 + 155 + 177), 3)`). This is somewhat expected given what we saw in the EDA section, where the distribution of the predictors is either similar across the two levels of response or very imbalanced.
 
 # Discussion and Conclusion
 
