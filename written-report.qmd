@@ -1,7 +1,7 @@
 ---
 title: "Investigating Factors into Squirrels’ Attitudes towards Humans in New York"
 author: "Team BCHZ - Nick Bayer, Richard Cui, Laura Han, Anna Zhang"
-date: "November 8, 2023"
+date: "December 1, 2023"
 format: pdf
 execute: 
   warning: false
@@ -17,6 +17,7 @@ library(tidyverse)
 library(tidymodels)
 library("ggplot2") 
 library("gridExtra")
+library(knitr)
 ```
 
 # Introduction and Data
@@ -185,6 +186,7 @@ Recipe for Model 1 steps: 1. Change response variable into factors. 2. Map all "
 #| message: false
 #| error: false
 #| echo: false
+#| warning: false
 squirrels_rec1 <- recipe(Indifferent ~ Activity_Score + Age + 
                           `Primary Fur Color` + Location + 
                           `Above Ground Sighter Measurement` + 
@@ -200,10 +202,6 @@ squirrels_rec1 <- recipe(Indifferent ~ Activity_Score + Age +
   step_dummy(all_nominal_predictors()) |>
   step_interact(terms = ~ Quaas:`Tail flags`) |>
   step_zv(all_predictors())
-
-prep(squirrels_rec1) |>
-  bake(squirrels_train) |>
-  glimpse()
 ```
 
 ```{r}
@@ -229,7 +227,8 @@ squirrels_cv1 <- squirrels_workflow1 |>
                 control = control_resamples(extract = calc_model_stats)) 
 
 # assessment
-collect_metrics(squirrels_cv1, summarize = TRUE)
+collect_metrics(squirrels_cv1, summarize = TRUE) |>
+  kable(digits = 3)
 ```
 
 ```{r}
@@ -238,7 +237,8 @@ collect_metrics(squirrels_cv1, summarize = TRUE)
 #| echo: false
 map_df(squirrels_cv1$.extracts, ~ .x[[1]][[1]]) |>
   summarise(mean_aic = mean(AIC), 
-            mean_bic = mean(BIC))
+            mean_bic = mean(BIC)) |>
+  kable(digits = 3)
 ```
 
 ### Model 2
@@ -251,6 +251,7 @@ Recipe for Model 2 steps: 1. Change response variable into factors 2. Map all "F
 #| message: false
 #| error: false
 #| echo: false
+#| warning: false
 squirrels_rec2 <- recipe(Indifferent ~ Age + `Primary Fur Color`+
                           `Above Ground Sighter Measurement` + 
                           Kuks + Quaas + Moans + `Tail flags` + 
@@ -265,10 +266,6 @@ squirrels_rec2 <- recipe(Indifferent ~ Age + `Primary Fur Color`+
   step_dummy(all_nominal_predictors()) |>
   step_interact(terms = ~ Quaas:`Tail flags`) |>
   step_zv(all_predictors())
-
-prep(squirrels_rec2) |>
-  bake(squirrels_train) |>
-  glimpse()
 ```
 
 ```{r}
@@ -284,7 +281,8 @@ squirrels_cv2 <- squirrels_workflow2 |>
                 control = control_resamples(extract = calc_model_stats)) 
 
 # assessment
-collect_metrics(squirrels_cv2, summarize = TRUE)
+collect_metrics(squirrels_cv2, summarize = TRUE) |>
+  kable(digits = 3)
 ```
 
 ```{r}
@@ -293,7 +291,8 @@ collect_metrics(squirrels_cv2, summarize = TRUE)
 #| echo: false
 map_df(squirrels_cv2$.extracts, ~ .x[[1]][[1]]) |>
   summarise(mean_aic = mean(AIC), 
-            mean_bic = mean(BIC))
+            mean_bic = mean(BIC)) |>
+  kable(digits = 3)
 ```
 
 ## Model Conditions
@@ -322,6 +321,7 @@ Since Model 2 has a higher accuracy and AUC, as well as lower AIC and BIC, we wi
 #| message: false
 #| error: false
 #| echo: false
+#| warning: false
 squirrels_fit <- squirrels_workflow2 |>
   fit(data = squirrels)
 
@@ -329,14 +329,19 @@ coeffs <- squirrels_fit |>
   extract_fit_parsnip() |>
   tidy()
 
-coeffs
+coeffs |>
+  kable(digits = 3)
 ```
 
 ```{r}
-squirrels_pred <- predict(squirrels_fit, squirrels_test, type = "prob") |> 
-  bind_cols(squirrels_test) 
-squirrels_pred
+#| message: false
+#| error: false
+#| echo: false
+#| warning: false
 
+
+squirrels_pred <- predict(squirrels_fit, squirrels_test, type = "prob") |> 
+  bind_cols(squirrels_test)
 ```
 
 ```{r}
