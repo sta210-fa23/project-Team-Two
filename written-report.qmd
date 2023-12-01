@@ -123,7 +123,6 @@ Since there were so few squirrels that approached the researchers, it is hard to
 An interaction that we would like to examine further is whether the presence of tail activities, specifically `tail flags`, when interacting with `Quaas`, influences the likelihood that a squirrel is indifferent to humans. When squirrels flag their tails, the motion exaggerates their size and is used to confuse rivals or predators. When squirrels are heard quaaing, they are making an elongated vocal communication to indicate the presence of a ground predator. Therefore, seeing the interaction between tail flags and quaas could help us understand whether or not the squirrels are indifferent to humans or not.
 
 ```{r}
-
 squirrels |>
   mutate(interact_true = ifelse(`Tail flags`== TRUE & Quaas == TRUE, TRUE, FALSE)) |>
   mutate(Indifferent = ifelse(Indifferent == TRUE, "Indifferent", "Not Indifferent")) |>
@@ -247,7 +246,9 @@ squirrels_rec2 <- recipe(Indifferent ~ Age + `Primary Fur Color`+
   step_naomit(Indifferent) |>
   step_mutate(`Above Ground Sighter Measurement` = ifelse(
     `Above Ground Sighter Measurement` == "FALSE", 0, 
-    1)) |>
+    `Above Ground Sighter Measurement`)) |>
+  step_mutate(`Above Ground Sighter Measurement` = 
+                as.integer(`Above Ground Sighter Measurement`)) |>
   step_dummy(all_nominal_predictors()) |>
   step_interact(terms = ~ Quaas:`Tail flags`) |>
   step_zv(all_predictors())
