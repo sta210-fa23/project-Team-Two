@@ -308,6 +308,16 @@ test_stat <- dev_reduced - dev_full
 kable(pchisq(test_stat, 3, lower.tail = FALSE), col.names = c("Drop-in-deviance p-value"))
 ```
 
+### Multicollinearity
+
+
+```{r}
+library(rms)
+vif(squirrels_fit_full$fit)
+```
+
+
+
 ## Model Conditions
 
 We will check model conditions for Model 2 since this is the better performing model due to higher accuracy and AUC and lower AIC and BIC.
