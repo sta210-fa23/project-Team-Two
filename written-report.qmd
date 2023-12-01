@@ -1,5 +1,5 @@
 ---
-title: "Squirrels in NY: Project Proposal"
+title: "Investigating Factors into Squirrels’ Attitudes towards Humans in New York"
 author: "Team BCHZ - Nick Bayer, Richard Cui, Laura Han, Anna Zhang"
 date: "November 8, 2023"
 format: pdf
@@ -120,18 +120,31 @@ The distribution of `Activity_Score` for squirrels that were indifferent vs. not
 
 Since there were so few squirrels that approached the researchers, it is hard to tell whether the graphs are very different in shape. The difference may be something that we explore further.
 
-An interaction that we would like to examine further is whether the presence of tail activities, specifically `tail flags`, when interacting with `Quaas`, influences the likelihood that a squirrel is indifferent to humans. When squirrels flag their tails, the motion exaggerates their size and is used to confuse rivals or predators. When squirrels are heard quaaing, they are making an elongated vocal communication to indicate the presence of a ground predator. Therefore, seeing the interaction between tail flags and quaas could help us understand whether or not the squirrels are indifferent to humans or not.
+An interaction that we would like to examine further is whether the presence of tail activities, specifically `tail flags`, when interacting with `Quaas`/`Kuks`, influences the likelihood that a squirrel is indifferent to humans. When squirrels flag their tails, the motion exaggerates their size and is used to confuse rivals or predators. When squirrels are heard quaaing, they are making an elongated vocal communication to indicate the presence of a ground predator. Meanwhile, kuk is a chirpy vocal communication used for a variety of reasons. Therefore, seeing the interaction between tail flags and quaas, more broadly, kuks, could help us understand whether or not the squirrels are indifferent to humans or not. In both graphs below, there are more counts of false interaction between both `Tail Flags` and `Quaas` as well as `Tail Flags` and `Kuks` (1600) than true interaction (1400), which shows a mild relationship between the variables.
 
 ```{r}
-squirrels |>
+
+interact_1 <- squirrels |>
   mutate(interact_true = ifelse(`Tail flags`== TRUE & Quaas == TRUE, TRUE, FALSE)) |>
   mutate(Indifferent = ifelse(Indifferent == TRUE, "Indifferent", "Not Indifferent")) |>
   ggplot(aes(x = interact_true)) +
-  geom_bar() +
+  geom_bar(fill = "brown") +
   facet_wrap(~Indifferent) +
   labs(x = "Interaction between Quaas and Tail Flags",
        y = "Count",
        title = "Interaction Effect between Tail Flags and Quaas in Indifferent Or Not")
+
+interact_2 <- squirrels |>
+  mutate(interact_true = ifelse(`Tail flags`== TRUE & Kuks == TRUE, TRUE, FALSE)) |>
+  mutate(Indifferent = ifelse(Indifferent == TRUE, "Indifferent", "Not Indifferent")) |>
+  ggplot(aes(x = interact_true)) +
+  geom_bar(fill = "brown") +
+  facet_wrap(~Indifferent) +
+  labs(x = "Interaction between Kuks and Tail Flags",
+       y = "Count",
+       title = "Interaction Effect between Tail Flags and Kuks in Indifferent Or Not")
+
+grid.arrange(interact_1, interact_2, nrow = 2) 
 ```
 
 ## Data dictionary
