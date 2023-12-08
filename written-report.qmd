@@ -22,26 +22,61 @@ library(knitr)
 
 # Introduction and Data
 
-As a result of the continuous human development, animals are inevitably interacting with humans more often. However, this form of interaction has mostly shown to be a disturbance to animals [\[1\]](https://www.jstor.org/stable/pdf/25177145.pdf). Animals see humans as a threat, so it is no surprise that they would treat the presence of humans the same way they would when they face other predators. Nevertheless, recent studies show that the squirrels actually act differently, as characterized by a phenomenon called synurbization, or the process of becoming urbanized [\[2\]](https://link.springer.com/article/10.1007/s11252-008-0060-0).
+As a result of the continuous human development, animals are inevitably interacting with humans more often. However, this form of interaction has mostly shown to be a disturbance to animals [\[1\]](https://www.jstor.org/stable/pdf/25177145.pdf). Animals see humans as a threat, so it is no surprise that they would treat the presence of humans the same way they would when they face other predators. Nevertheless, recent studies show that the squirrels may actually act differently, as characterized by a phenomenon called synurbization, or the process of adapting to an urbanized environment, such that it changes their natural behaviors [\[2\]](https://link.springer.com/article/10.1007/s11252-008-0060-0).
 
-In an effort to investigate these two competing theories, and to better understand the dynamic between squirrels and humans, we carry out this research project to explore what factors affect whether a squirrel is indifferent to human presence. From there, we would like to deduce whether the squirrels' attitude to humans are caused by human presence or other factors such as their species.
+In an effort to investigate these two competing theories, and to better understand the dynamic between squirrels and humans, we carry out this research project to explore what factors affect whether a squirrel is indifferent to human presence. From there, we would like to deduce whether the squirrels' attitude to humans are caused by human presence or other natural factors such as their species.
 
-We hypothesize that the age category, location, distance above ground when spotted, number of activities that the squirrel was doing, sound that the squirrel makes, and whether squirrel is disturbed by human activities (as measured by features like approaching or running away from humans and tail signs) could have a relationship with the attitude of the squirrel (whether indifferent or not).
+We hypothesize that the age category, location, distance above ground when spotted, number of activities that the squirrel was doing, sound that the squirrel makes, and tail signs could have a relationship with the attitude of the squirrel (whether indifferent or not), providing valuable insight into the validity of "synurbanization".
 
 ## Data description
 
-We are sourcing our data set from the TidyTuesday project on GitHub. Their data originally came from The 2018 Squirrel Census, a project based on the sightings of squirrels in Central Park, New York City.
+We are sourcing our data set from the TidyTuesday project on GitHub. Their data originally came from The 2018 Squirrel Census, a project based on the sightings of Eastern gray squirrels (Sciurus carolinensis) in Central Park, New York City.
 
-In October of 2018, the Squirrel Census Team and a group of over 300 volunteers collected the data based on squirrel sightings around Central Park.
+In October of 2018, the Squirrel Census Team and a group of over 300 volunteers collected the data based on squirrel sightings around Central Park. The data was collected between October 06, 2018 and October 20, 2018 during both the A.M. and P.M. across Central Park. Each observation is one squirrel, with a Unique ID of hectare-shift-date-hectare squirrel number. Almost every observation is a unique squirrel with the exceptions of a few duplicate entries, which is resolved in the data cleaning section below.
 
 The dataset has 3023 observations and 31 variables, and it gives a wide range of observations and characteristics. It first gives us the location, in both longitude and latitude, the hectare of the park the squirrel was located in, the date, and whether it was found in the AM or PM. It also assigns each squirrel a unique ID. It has information on whether the squirrel is an adult or a juvenile, its primary and highlight fur colors, and has a number for the sequence of sightings in one session. It also contains data on their exact location, their distance from the ground, and the objects they were found on. There is data for the activities the squirrel was found doing, ranging from running to foraging, with a separate column for any activity that was not chosen to be a column. It gives data on the sounds the squirrel made and tail movements, if any. Finally, it has 4 columns for the squirrel's response when facing humans, being either that the squirrel approached, was indifferent, ran away, or any other action.
 
-## Initial exploratory data analysis
+## Data Cleaning and Initial exploratory data analysis
+
+First, based on the data description, each squirrel is assigned a unique squirrel ID, and we first check if any squirrels is observed and recorded multiple times and decide how we should combine the observations.
+
+```{r}
+squirrels <- read_csv("data/squirrel_data.csv")
+squirrels_dups <- squirrels |> group_by(`Unique Squirrel ID`) |> summarize(count = n()) |> 
+  filter(count > 1) 
+squirrels_dups |> kable(caption = "Squirrels that are observed more than once")
+```
+
+Then, we further check what happened to each of the five squirrels that are observed twice and found that they are simply duplicate observations with exactly the same entries except for slight latitude and longitude differences (differences only after 4 decimal points, which is very slight). For example, the two observation entries for one such squirrel is reported below.
+
+```{r}
+squirrels |> filter(`Unique Squirrel ID` == "1F-AM-1010-04") |> 
+  kable(caption = "Duplicate entries for one squirrel")
+```
+
+Since the difference is negligible and longitude and latitude are not our hypothesized predictors, we simply remove all the duplicate entries from the dataset and proceed to further analysis.
+
+```{r}
+squirrels_dup_df <- 
+  subset(squirrels, 
+         `Unique Squirrel ID` %in% squirrels_dups$`Unique Squirrel ID`) |> 
+  arrange(`Unique Squirrel ID`)
+
+squirrels_dup_fixed <- squirrels_dup_df[-c(1,3,5,7,9),]
+```
+
+
+```{r}
+squirrels <- rbind(subset(squirrels, 
+                          !`Unique Squirrel ID` %in% 
+                            squirrels_dups$`Unique Squirrel ID`), 
+                   squirrels_dup_fixed)
+```
+
 
 We create a numeric variable named Activity_Score that encapsulates the number of activities a squirrel is engaged in during the span of observation. The distribution of the Activity_Score variable is unimodal, slightly right skewed, and has a median of 1. This means that most squirrels in the data set were only engaged in 1 activity during the span of observation.
 
 ```{r}
-squirrels <- read_csv("data/squirrel_data.csv")
 activities <- squirrels |>   
   select(c(Running, Chasing, Climbing, Eating, Foraging)) |>
   mutate(Running = ifelse(Running == TRUE, 1, 0),
@@ -243,7 +278,7 @@ map_df(squirrels_cv1$.extracts, ~ .x[[1]][[1]]) |>
 
 ### Model 2
 
-As the EDA has shown, `Activity_Score` does not seem to have a relationship with `Indifferent`, so we take it out for Model 2. We conduct a drop-in-deviance test that confirms that the coefficient of `Activity_Score` is not statistically significant from 0 because the p-value of the test 0.72 \> 0.05.
+As the EDA has shown, `Activity_Score` does not seem to have a relationship with `Indifferent`, so we take it out for Model 2. We conduct a drop-in-deviance test that confirms that the coefficient of `Activity_Score` is not statistically significant from 0 because the p-value of the test 0.45 \> 0.05.
 
 Recipe for Model 2 steps: 1. Change response variable into factors 2. Map all "FALSE" in `Above Ground Sighter Measurement` variable to 0, and not "FALSE" to 1, then convert the variable type to factors. 3. Create dummy variables for all nominal predictors 4. Remove all variables with zero variance.
 
@@ -397,7 +432,8 @@ The linearity condition is not satisfied. There is not a linear relationship bet
 
 **Randomness**
 
-The data was collected from the sightings of squirrels in Central Park, NYC from a group of volunteers. Although the volunteers are not randomly sampled, the sample of squirrels can be considered as random since we do not have reason to believe that the squirrels collected in this study differ systematically from squirrels in the rest of the world in regards to their indifference to humans. Therefore, randomness is satisfied.
+The data was collected from the sightings of squirrels in Central Park, NYC from a group of volunteers. Although the squirrels were not randomly sampled, the sample of squirrels can be considered as random since we do not have reason to believe that the characteristics of squirrels collected in this study differ systematically from squirrels in other urban areas in regards to their indifference to humans. Since the squirrels in the study are Eastern gray squirrels, the population would be squirrels living in major urban areas in the Eastern half of the United States (the squirrel's natural habitat range). Therefore, randomness is satisfied.
+
 
 **Independence**
 
