@@ -40,17 +40,21 @@ The dataset has 3023 observations and 31 variables, and it gives a wide range of
 
 First, based on the data description, each squirrel is assigned a unique squirrel ID, and we first check if any squirrels is observed and recorded multiple times and decide how we should combine the observations.
 
+
 ```{r}
 squirrels <- read_csv("data/squirrel_data.csv")
-squirrels_dups <- squirrels |> group_by(`Unique Squirrel ID`) |> summarize(count = n()) |> 
+squirrels_dups <- squirrels |> group_by(`Unique Squirrel ID`) |> 
+  summarize(count = n()) |> 
   filter(count > 1) 
 squirrels_dups |> kable(caption = "Squirrels that are observed more than once")
 ```
 
-Then, we further check what happened to each of the five squirrels that are observed twice and found that they are simply duplicate observations with exactly the same entries except for slight latitude and longitude differences (differences only after 4 decimal points, which is very slight). For example, the two observation entries for one such squirrel is reported below.
+Then, we further check what happened to each of the five squirrels that are observed twice and found that they are simply duplicate observations with exactly the same entries except for slight latitude and longitude differences (differences only after 4 decimal points, which is very slight). For example, the two observation entries for one such squirrel is reported below (results are truncated to only show the first 5 columns due to space limitations, but we have checked that all variables are the same between these two observations except for slight latitude and longitude differences as described above).
 
 ```{r}
 squirrels |> filter(`Unique Squirrel ID` == "1F-AM-1010-04") |> 
+  select(X, Y, `Unique Squirrel ID`, Hectare, Shift, Date, 
+         `Hectare Squirrel Age Number`, Age) |>
   kable(caption = "Duplicate entries for one squirrel")
 ```
 
