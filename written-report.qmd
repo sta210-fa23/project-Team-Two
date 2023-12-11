@@ -22,43 +22,42 @@ library(knitr)
 
 # Introduction and Data
 
-As a result of the continuous human development, animals are inevitably interacting with humans more often. However, this form of interaction has mostly shown to be a disturbance to animals [\[1\]](https://www.jstor.org/stable/pdf/25177145.pdf). Animals see humans as a threat, so it is no surprise that they would treat the presence of humans the same way they would when they face other predators. Nevertheless, recent studies show that the squirrels may actually act differently, as characterized by a phenomenon called synurbization, or the process of adapting to an urbanized environment, such that it changes their natural behaviors [\[2\]](https://link.springer.com/article/10.1007/s11252-008-0060-0).
+As a result of continuous and ever-expanding human development, animals must inevitably interact with humans more often. According to prevailing scientific theory, these interactions often disrupt animals' natural behaviors; since animals see humans as threats, it is no surprise that they would treat the presence of humans the same way they would the presence of other predators [\[1\]](https://www.jstor.org/stable/pdf/25177145.pdf). However, recent studies show that the squirrels may undergo the process of phenomenon called synurbization, or the process of adapting to an urbanized environment through changes in their natural behavior [\[2\]](https://link.springer.com/article/10.1007/s11252-008-0060-0).
 
-In an effort to investigate these two competing theories, and to better understand the dynamic between squirrels and humans, we carry out this research project to explore what factors affect whether a squirrel is indifferent to human presence. From there, we would like to deduce whether the squirrels' attitude to humans are caused by human presence or other natural factors such as their species.
+In an effort to investigate these two competing theories, and to better understand the dynamic between squirrels and humans, we carry out this research project to determine the factors affecting squirrel's indifference to human presence. From there, we will deduce whether the squirrels' attitude to humans are caused by human presence or other natural factors such as species or age.
 
 We hypothesize that the age category, location, distance above ground when spotted, number of activities that the squirrel was doing, sound that the squirrel makes, and tail signs could have a relationship with the attitude of the squirrel (whether indifferent or not), providing valuable insight into the validity of "synurbanization".
 
-## Data description
+## Data Description
 
-We are sourcing our data set from the TidyTuesday project on GitHub. Their data originally came from The 2018 Squirrel Census, a project based on the sightings of Eastern gray squirrels (Sciurus carolinensis) in Central Park, New York City.
+We are sourcing our data set from the TidyTuesday project on GitHub. The data originally came from The 2018 Squirrel Census, a project based on the sightings of Eastern gray squirrels (Sciurus carolinensis) in Central Park, New York City.
 
-In October of 2018, the Squirrel Census Team and a group of over 300 volunteers collected the data based on squirrel sightings around Central Park. The data was collected between October 06, 2018 and October 20, 2018 during both the A.M. and P.M. across Central Park. Each observation is one squirrel, with a Unique ID of hectare-shift-date-hectare squirrel number. Almost every observation is a unique squirrel with the exceptions of a few duplicate entries, which is resolved in the data cleaning section below.
+In October of 2018, the Squirrel Census Team and a group of over 300 volunteers collected the data based on squirrel sightings around Central Park. The data was collected between October 06, 2018 and October 20, 2018 during both the A.M. and P.M. across Central Park. Each observation is one squirrel, with a Unique ID of \[hectare-shift-date-hectare squirrel number\]. Almost every observation is a unique squirrel with the exceptions of a few duplicate entries, which is resolved in the data cleaning section below.
 
-The dataset has 3023 observations and 31 variables, and it gives a wide range of observations and characteristics. It first gives us the location, in both longitude and latitude, the hectare of the park the squirrel was located in, the date, and whether it was found in the AM or PM. It also assigns each squirrel a unique ID. It has information on whether the squirrel is an adult or a juvenile, its primary and highlight fur colors, and has a number for the sequence of sightings in one session. It also contains data on their exact location, their distance from the ground, and the objects they were found on. There is data for the activities the squirrel was found doing, ranging from running to foraging, with a separate column for any activity that was not chosen to be a column. It gives data on the sounds the squirrel made and tail movements, if any. Finally, it has 4 columns for the squirrel's response when facing humans, being either that the squirrel approached, was indifferent, ran away, or any other action.
+The data set has 3023 observations and 31 variables and contains a wide range of situational factors and squirrel characteristics. We are given the location, in both longitude and latitude, the hectare of the park the squirrel was located in, the date, and whether it was found in the AM or PM. In addition to assigning the squirrel a unique ID, the data also has information on whether the squirrel is an adult or a juvenile, its primary and highlight fur colors, and the sequence of sightings in one session. The dataset then records each squirrel's exact location, their distance from the ground, and the objects they were found on. Additionally, there is data for the activities the squirrel was observed doing, ranging from running to foraging, with a separate column for all other activities not specifically mentioned. It gives data on the sounds the squirrel made and tail movements, if any. Finally, it has 4 separate columns for the squirrel's response when approached by humans: either the squirrel approached, was indifferent, ran away, or any other action.
 
-## Data Cleaning and Initial exploratory data analysis
+## Data Cleaning and Initial Exploratory Data Analysis
 
-First, based on the data description, each squirrel is assigned a unique squirrel ID, and we first check if any squirrels is observed and recorded multiple times and decide how we should combine the observations.
-
+Based on the data description, each squirrel is assigned a unique squirrel ID. We first check if any squirrel is observed or recorded multiple times.
 
 ```{r}
 squirrels <- read_csv("data/squirrel_data.csv")
 squirrels_dups <- squirrels |> group_by(`Unique Squirrel ID`) |> 
   summarize(count = n()) |> 
   filter(count > 1) 
-squirrels_dups |> kable(caption = "Squirrels that are observed more than once")
+squirrels_dups |> kable(caption = "Squirrels Observed More Than Once")
 ```
 
-Then, we further check what happened to each of the five squirrels that are observed twice and found that they are simply duplicate observations with exactly the same entries except for slight latitude and longitude differences (differences only after 4 decimal points, which is very slight). For example, the two observation entries for one such squirrel is reported below (results are truncated to only show the first 5 columns due to space limitations, but we have checked that all variables are the same between these two observations except for slight latitude and longitude differences as described above).
+We then examined each of the five duplicated squirrel entries and found that they were simply duplicate observations with very slight differences (after 4 decimal places) in latitude and longitude. The duplicate rows for one such squirrel is reported below (results are truncated to only show the first 5 columns due to space limitations, but we have checked that all variables are the same besides the slight latitude and longitude difference described above).
 
 ```{r}
 squirrels |> filter(`Unique Squirrel ID` == "1F-AM-1010-04") |> 
   select(X, Y, `Unique Squirrel ID`, Hectare, Shift, Date, 
-         `Hectare Squirrel Age Number`, Age) |>
-  kable(caption = "Duplicate entries for one squirrel")
+         `Hectare Squirrel Number`, Age) |>
+  kable(caption = "Duplicate Entries for Squirrel 1F-AM-1010-04")
 ```
 
-Since the difference is negligible and longitude and latitude are not our hypothesized predictors, we simply remove all the duplicate entries from the dataset and proceed to further analysis.
+Since the difference is negligible and longitude and latitude are not one of our hypothesized predictors, we simply remove all the duplicate entries from the data set.
 
 ```{r}
 squirrels_dup_df <- 
@@ -69,7 +68,6 @@ squirrels_dup_df <-
 squirrels_dup_fixed <- squirrels_dup_df[-c(1,3,5,7,9),]
 ```
 
-
 ```{r}
 squirrels <- rbind(subset(squirrels, 
                           !`Unique Squirrel ID` %in% 
@@ -77,8 +75,7 @@ squirrels <- rbind(subset(squirrels,
                    squirrels_dup_fixed)
 ```
 
-
-We create a numeric variable named Activity_Score that encapsulates the number of activities a squirrel is engaged in during the span of observation. The distribution of the Activity_Score variable is unimodal, slightly right skewed, and has a median of 1. This means that most squirrels in the data set were only engaged in 1 activity during the span of observation.
+We then create a numeric variable named `Activity_Score` that encapsulates the aggregate number of activities a squirrel is engaged in during the observation period. The distribution of the `Activity_Score` variable is unimodal, slightly right skewed, and has a median of 1. This means that most squirrels in the data set were only engaged in 1 activity during the span of observation.
 
 ```{r}
 activities <- squirrels |>   
@@ -152,15 +149,13 @@ grid.arrange(dist_activity, dist_response, dist_approach, nrow = 2)
 grid.arrange(indiff_activity_graph, approach_activity_graph, nrow = 2)
 ```
 
-There seems to be roughly equal number of squirrels that were and weren't indifferent to the humans.
+Our EDA shows that there seems to be a roughly equal number of squirrels that showed indifference to humans and those that didn't. However, there were far fewer squirrels that approached humans than squirrels that didn't. Thus, we decided that using Indifference vs. Not Indifferent would likely result in a model with a better model than using Approached vs. Not Approached. The distribution suggests that squirrels could show that they are not as synurbanized as we thought.
 
-There were far fewer squirrels that approached humans than squirrels that didn't. This could show that they are not as synurbanized as we thought.
-
-The distribution of `Activity_Score` for squirrels that were indifferent vs. not indifferent is roughly the same shape. Therefore, activity score and indifference do not seem to be correlated.
+The distribution of `Activity_Score` for squirrels that were Indifferent vs. Not Indifferent is roughly the same shape. Therefore, `Activity_Score` and `Indifferent` do not seem to be correlated.
 
 Since there were so few squirrels that approached the researchers, it is hard to tell whether the graphs are very different in shape. The difference may be something that we explore further.
 
-An interaction that we would like to examine further is whether the presence of tail activities, specifically `tail flags`, when interacting with `Quaas`/`Kuks`, influences the likelihood that a squirrel is indifferent to humans. When squirrels flag their tails, the motion exaggerates their size and is used to confuse rivals or predators. When squirrels are heard quaaing, they are making an elongated vocal communication to indicate the presence of a ground predator. Meanwhile, kuk is a chirpy vocal communication used for a variety of reasons. Therefore, seeing the interaction between tail flags and quaas, more broadly, kuks, could help us understand whether or not the squirrels are indifferent to humans or not. In both graphs below, there are more counts of false interaction between both `Tail Flags` and `Quaas` as well as `Tail Flags` and `Kuks` (1600) than true interaction (1400), which shows a mild relationship between the variables.
+An interaction that we would like to examine further is whether the presence of `Tail flags`, combined with `Quaas` and `Kuks`, influences the likelihood that a squirrel is indifferent to humans. Tail flags are a waving motion that squirrel to exaggerate their size and confuse rivals or predators. Qaas are elongated vocal communications that squirrels use to indicate the presence of a ground predator. Meanwhile, kuks are a chirpy vocal communication used for a variety of reasons. Therefore, examining the interaction between tail flags and quaas, and more broadly, kuks, could help us understand how squirrels perceive humans and how synurbanization affects that perception. In both graphs below, there are more counts of FALSE for the interaction term between both `Tail Flags` and `Quaas` as well as between `Tail Flags` and `Kuks` (1600) than TRUE (1400). When we analyze the distribution of TRUE and FALSE for Indifferent vs. Not Indifferent, we see that the number of FALSE values is approximately the same, indicating that the interaction term may not be correlated with `Indifferent`.
 
 ```{r}
 
@@ -195,9 +190,9 @@ The data dictionary can be found [here](https://github.com/sta210-fa23/project-T
 
 ## Analysis approach
 
-Our response variable is `Indifferent`, which is a categorical variable that indicates whether or not the squirrel is indifferent to humans. Potential predictors include `Activity_Score` (a quantitative variable that records the number of activities the squirrel is observed doing), `Age` (a categorical variable that indicates whether the squirrel is adult or juvenile), `Fur_Color` (categorical variable), `Location` (categorical variable), `Above_Ground_Measurement` (quantitative variable), sounds that the squirrels are making (categorical variables including `Kuks`, `Quaas`, and `Moans`), `Tail_flags` and `Tail_twitches`, which are also categorical.
+Our response variable is `Indifferent`, which is a categorical variable that indicates whether or not the squirrel is indifferent to humans (meaning that the squirrel does not run away). Potential predictors include `Activity_Score` (a quantitative variable that records the number of activities the squirrel is observed doing), `Age` (a categorical variable that indicates whether the squirrel is adult or juvenile), `Primary Fur Color` (categorical variable), `Above Ground Sighter Measurement` (quantitative variable), sounds that the squirrels are making (categorical variables including `Kuks`, `Quaas`, and `Moans`), `Tail flags` and `Tail twitches` (also categorical).
 
-To explore the relationship between whether or not the squirrel is indifferent and the predictor variables, such as age category, location, distance above ground when spotted, number of activities the squirrel is observed doing, sound that the squirrel makes, and their tail signs, we plan to use logistic regression. We are using logistic regression because our dependent variable, `Indifferent,` is categorical. We will compare logistic regression models using AIC and BIC to evaluate what predictor variables and what interactions between the variables should be included in the model to best predict the attitude of the squirrel towards humans. We will also perform 10-fold cross-validation for model comparison.
+To explore the relationship between whether or not the squirrel is indifferent and predictor variables, such as age, distance above ground when spotted, number of activities the squirrel is observed doing, sound that the squirrel makes, and tail signs, we plan to use a logistic regression. We are using logistic regression because our dependent variable, `Indifferent,` is categorical, and we believe that the log odds of a squirrel being indifferent has a linear relationship with the predictor variables we identified above. We will compare logistic regression models using AIC and BIC to evaluate the predictor variables and interaction term should be included in the model to best predict the attitude of the squirrel towards humans. We will also perform 10-fold cross-validation for model comparison.
 
 ```{r}
 #| message: false
@@ -219,7 +214,7 @@ squirrels_spec <- logistic_reg() |>
 
 Model 1 includes all variables stated in our hypothesis.
 
-Recipe for Model 1 steps: 1. Change response variable into factors. 2. Map all "FALSE" in `Above Ground Sighter Measurement` variable to 0, then convert the variable type to integer. 3. Create dummy variables for all nominal predictors. 4. Create interaction terms between `Quaas` and `Tail flags` 5. Remove all variables with zero variance.
+Recipe for Model 1 steps: 1) Change response variable into factors. 2) Map all "FALSE" in `Above Ground Sighter Measurement` variable to 0, then convert the variable type to integer. 3) Create dummy variables for all nominal predictors. 4) Create interaction terms between `Quaas` and `Tail flags` 5) Remove all variables with zero variance.
 
 ```{r}
 #| message: false
@@ -227,7 +222,7 @@ Recipe for Model 1 steps: 1. Change response variable into factors. 2. Map all "
 #| echo: false
 #| warning: false
 squirrels_rec1 <- recipe(Indifferent ~ Activity_Score + Age + 
-                          `Primary Fur Color` + Location + 
+                          `Primary Fur Color` + 
                           `Above Ground Sighter Measurement` + 
                           Kuks + Quaas + Moans + `Tail flags` + 
                           `Tail twitches`,
@@ -282,9 +277,11 @@ map_df(squirrels_cv1$.extracts, ~ .x[[1]][[1]]) |>
 
 ### Model 2
 
-As the EDA has shown, `Activity_Score` does not seem to have a relationship with `Indifferent`, so we take it out for Model 2. We conduct a drop-in-deviance test that confirms that the coefficient of `Activity_Score` is not statistically significant from 0 because the p-value of the test 0.45 \> 0.05.
+As the EDA has shown, `Activity_Score` does not seem to have a relationship with `Indifferent`, so we take it out for Model 2. We conduct a drop-in-deviance test that confirms that the coefficient of `Activity_Score` is not statistically significant from 0 because the p-value of the test (0.99) was greater than 0.05.
 
-Recipe for Model 2 steps: 1. Change response variable into factors 2. Map all "FALSE" in `Above Ground Sighter Measurement` variable to 0, and not "FALSE" to 1, then convert the variable type to factors. 3. Create dummy variables for all nominal predictors 4. Remove all variables with zero variance.
+Recipe for Model 2 steps: 1) Change response variable into factors 2) Map all "FALSE" in `Above Ground Sighter Measurement` variable to 0, and not "FALSE" to 1, then convert the variable type to factors. 3) Create dummy variables for all nominal predictors 4) Remove all variables with zero variance.
+
+As observed below, Model 2 has lower AIC (2771.92 \< 2773.76) and BIC (2838.60 \< 2846.03) than Model 1. It also has marginally higher accuracy (0.519 \> 0.518). Therefore, Model 2 is the better model and we will use it for the rest of our analysis.
 
 ```{r}
 #| message: false
@@ -358,8 +355,6 @@ model <- squirrels_fit_red |>
   extract_fit_parsnip()
 ```
 
-
-
 ```{r}
 #| message: false
 #| error: false
@@ -374,7 +369,6 @@ kable(vif(model$fit), col.names = c('VIF'), caption = "VIF Table of Predictors")
 #| echo: false
 tidy(model) |> kable(digits = 3, caption = "Model 2 Outputs")
 ```
-
 
 From the VIF table, only the variable `Age` has concerning VIF values (greater than 10). According to the model output, both levels of `Age` have very high p-values, which shows that this variable is not significant in predicting the response variable. Therefore, we can just drop `Age` from the model.
 
@@ -405,15 +399,13 @@ squirrels_fit_final <- squirrels_workflow3 |>
   fit(data = squirrels_train)
 ```
 
-
-
 ## Model Conditions
 
 We will check model conditions for Model 2 since this is the better performing model due to higher accuracy and AUC and lower AIC and BIC.
 
 **Linearity**
 
-There is one numeric variable in Model 2, Above Ground Sighter Measurement.
+There is one numeric variable in Model 2, `Above Ground Sighter Measurement`, so we check its linearity using empirical logit.
 
 ```{r}
 squirrels |> 
@@ -432,12 +424,11 @@ squirrels |>
 
 ```
 
-The linearity condition is not satisfied. There is not a linear relationship between the empirical logit and the predictor variable of Above Ground Sighter Measurement. We could fix this condition if we had more specific data with fewer NA values. Additionally, since we converted the false values to zeros, that may have led to the variable not having a linear relationship with the empirical logit. Because the condition is not satisfied, the coefficients and p-value for Above Ground Sighter Measurement in our model may not be accurate, and we are unable to conclude if Above Ground Sighter Measurement is a significant predictor.
+The linearity condition is not satisfied. There is not a linear relationship between the empirical logit and the predictor variable of `Above Ground Sighter Measurement`. We could fix this condition if we had more specific data with fewer NA values. Additionally, by converting FALSE values to zeros, we may have caused the variable to not have a linear relationship with the empirical logit. Because the condition is not satisfied, the coefficients and p-value for `Above Ground Sighter Measurement` in our model may not be accurate, and we are unable to conclude if `Above Ground Sighter Measurement` is a significant predictor.
 
 **Randomness**
 
 The data was collected from the sightings of squirrels in Central Park, NYC from a group of volunteers. Although the squirrels were not randomly sampled, the sample of squirrels can be considered as random since we do not have reason to believe that the characteristics of squirrels collected in this study differ systematically from squirrels in other urban areas in regards to their indifference to humans. Since the squirrels in the study are Eastern gray squirrels, the population would be squirrels living in major urban areas in the Eastern half of the United States (the squirrel's natural habitat range). Therefore, randomness is satisfied.
-
 
 **Independence**
 
@@ -492,15 +483,15 @@ squirrels_pred |>
   conf_mat(truth = Indifferent, estimate = Indifferent_predicted)
 ```
 
-Of all the variables we examined, `KuksTRUE`, `QuaasTRUE`, `Above Ground Sighter Measurement` were the only terms that had coefficients with significant p-values. The odds that a squirrel is indifferent to a human is multiplied by a factor of `r round(exp(-0.576), 3)` ($\exp(-0.576)$) if it kuks and `r round(exp(-0.897), 3)` ($\exp(-0.897)$) if it quaas, holding all else constant. For every additional 1 meter in the squirrel's location above ground, the odds that it is indifferent is multiplied by a factor of `r round(exp(-0.011), 3)` ($\exp(-0.011)$), holding all else constant. In other words, kuks, quaas, and being above ground decrease the odds that a squirrel is indifferent to humans. 
+Of all the variables we examined, `QuaasTRUE` and `Primary Fur Color_Gray` were the only terms that had coefficients with significant p-values. The odds that a squirrel is indifferent to a human is multiplied by a factor of `r round(exp(-0.956), 3)` ($\exp(-0.956)$) if it quaas, holding all else constant. If a squirrel's fur color is gray, the odds that it its indifferent to humans is multiplied by a factor of `r round(exp(0.48), 3)` ($\exp(-0.480)$), holding all else constant. Although `Above Ground Sighter Measurement` is not significant at the $\alpha = 0.05$ level, it is significant at the $\alpha = 0.10$ level. For every additional 1 meter in the squirrel's location above ground, the odds that it is indifferent is multiplied by a factor of `r round(exp(-0.009), 3)` ($\exp(-0.009)$), holding all else constant. In other words, quaas, and being above ground decrease the odds that a squirrel is indifferent to humans.
 
-The model does not have a high predictive power as shown by the low AUC (0.515) and accuracy ((112+177) / (112 + 130 + 155 + 177) = `r round((112+177) / (112 + 130 + 155 + 177), 3)`). This is somewhat expected given what we saw in the EDA section, where the distribution of the predictors is either similar across the two levels of response or very imbalanced.
+The model does not have a high predictive power as shown by the low AUC (0.534) and accuracy `r round((99+198) / (74+197+99+198), 3)`) ($\frac{99+198}{74+197+99+198}$). This is somewhat expected given what we saw in the EDA section, where the distribution of the predictors is either similar across the two levels of response or very imbalanced.
 
 # Discussion and Conclusion
 
-In this paper, we have investigated which factors significantly affect whether a squirrel is indifferent to human presence, using a logistic regression model and a 10-fold cross-validation for model selection. We concluded that based on our logistic model, there are three significant predictors of `Indifferent`, which are `Kuks`, `Quaas`, and `Above Ground Sighter Measurement` since their p-values in the model is less than the $\alpha = 0.05$ significance level. Putting this into a larger context, this shows that the squirrels' attitude to humans are largely caused by human presence since `Quaas` are sounds squirrels make when they see a ground threat (either a human or perhaps a pet dog), and our model shows that its presence is predicted to decrease the squirrels' odds of being indifferent. Surprisingly, both `Tail Flags`, which occurs when squirrels identify a threat and seek to confuse it, and `Tail Twitches`, which indicate curiosity, were not significant in the model. The insignificance of these variables may indicate that the squirrels do not see humans as a threat and are more preoccupied with other threats like hawks and dogs. 
+In this paper, we have investigated which factors significantly affect whether a squirrel is indifferent to human presence, using a logistic regression model and a 10-fold cross-validation for model selection. We concluded that based on our logistic model, there are three significant predictors of `Indifferent`, which are `Kuks`, `Quaas`, and `Above Ground Sighter Measurement` since their p-values in the model is less than the $\alpha = 0.05$ significance level. Putting this into a larger context, this shows that the squirrels' attitude to humans are largely caused by human presence since `Quaas` are sounds squirrels make when they see a ground threat (either a human or perhaps a pet dog), and our model shows that its presence is predicted to decrease the squirrels' odds of being indifferent. Surprisingly, both `Tail Flags`, which occurs when squirrels identify a threat and seek to confuse it, and `Tail Twitches`, which indicate curiosity, were not significant in the model. The insignificance of these variables may indicate that the squirrels do not see humans as a threat and are more preoccupied with other threats like hawks and dogs.
 
-Although `Above Ground Sighter Measurement` has a statistically significant coefficient, the actual value of the coefficient is near-zero. The fact that it is negative is difficult to interpret because it suggests that the higher the squirrel is from the ground, the lower the odds of it being indifferent to the researchers. However, logically, we might argue that the higher the squirrel is off the ground, the safer it should feel from the researchers. Or perhaps, there are confounding factors: maybe the squirrels on trees are skittish due to another threat.
+Although `Above Ground Sighter Measurement` had a statistically significant coefficient at $\alpha = 0.10$, the actual value of the coefficient is near-zero. The fact that it is negative is difficult to interpret because it suggests that the higher the squirrel is from the ground, the lower the odds of it being indifferent to the researchers. However, logically, we might argue that the higher the squirrel is off the ground, the safer it should feel from the researchers. Or perhaps, there are confounding factors: maybe the squirrels on trees are skittish due to another threat.
 
 One important limitations is the concerns about the way data is collected. For example, based on the data description, the data is collected from volunteer sighting in NYC. This might introduce some lack of rigorousness, especially when it comes to numeric variables like `Above Ground Sighter Measurement` since the volunteers might give a very subjective estimation of the height above the ground when standing and observing from distance. In addition, there are a lot of NA's in the dataset, which to some extent limits our ability to do analysis.
 
