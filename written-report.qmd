@@ -64,7 +64,7 @@ squirrels <- rbind(subset(squirrels,
                    squirrels_dup_fixed)
 ```
 
-For variable `Age`, there is an unwanted level of "?", which is probably due to the error during data collection. Therefore, we will drop all observations with `Age == ?` (a total of `r 3018 - 2893` observations, which is acceptable given our original data size of 3018).
+For variable `Age`, there is an unwanted level of "?", which is probably due to the error during data collection. Therefore, we will drop all observations with `Age == "?"` (a total of `r 3018 - 2893` observations, which is acceptable given our original data size of 3018).
 
 ```{r}
 squirrels <- squirrels |> filter(Age != "?")
@@ -98,7 +98,8 @@ dist_activity <- squirrels |>
 
 ```{r}
 dist_response <- squirrels |>
-  mutate(Indifferent = ifelse(Indifferent == TRUE, "Indifferent", "Not Indifferent")) |>
+  mutate(Indifferent = ifelse(Indifferent == TRUE, 
+                              "Indifferent", "Not Indifferent")) |>
   ggplot(aes(x = Indifferent)) +
   geom_bar(fill = "brown") +
   labs(title = "Distribution of Indifference",
@@ -108,7 +109,8 @@ dist_response <- squirrels |>
 
 ```{r}
 dist_approach <- squirrels |>
-  mutate(Indifferent = ifelse(Indifferent == TRUE, "Indifferent", "Not Indifferent")) |>
+  mutate(Indifferent = ifelse(Indifferent == TRUE, 
+                              "Indifferent", "Not Indifferent")) |>
   ggplot(aes(x = Approaches)) +
   geom_bar(fill = "brown") +
   labs(title = "Distribution of Whether or not Squirrels Approach Humans",
@@ -118,7 +120,8 @@ dist_approach <- squirrels |>
 
 ```{r}
 indiff_activity_graph <- squirrels |>
-  mutate(Indifferent = ifelse(Indifferent == TRUE, "Indifferent", "Not Indifferent")) |>
+  mutate(Indifferent = ifelse(Indifferent == TRUE, 
+                              "Indifferent", "Not Indifferent")) |>
   ggplot(aes(x = Activity_Score)) +
   geom_bar(fill = "brown") +
   facet_wrap(~ Indifferent) +
@@ -129,7 +132,8 @@ indiff_activity_graph <- squirrels |>
 
 ```{r}
 approach_activity_graph <- squirrels |> 
-  mutate(Approaches = ifelse(Approaches == TRUE, "Approach", "Not Approach")) |>
+  mutate(Approaches = ifelse(Approaches == TRUE, 
+                             "Approach", "Not Approach")) |>
   ggplot(aes(x = Activity_Score)) + 
   geom_bar(fill = "brown") +
   facet_wrap(~ Approaches) +
@@ -154,8 +158,10 @@ An interaction that we would like to examine further is whether the presence of 
 ```{r}
 
 interact_1 <- squirrels |>
-  mutate(interact_true = ifelse(`Tail flags`== TRUE & Quaas == TRUE, TRUE, FALSE)) |>
-  mutate(Indifferent = ifelse(Indifferent == TRUE, "Indifferent", "Not Indifferent")) |>
+  mutate(interact_true = 
+           ifelse(`Tail flags`== TRUE & Quaas == TRUE, TRUE, FALSE)) |>
+  mutate(Indifferent = 
+           ifelse(Indifferent == TRUE, "Indifferent", "Not Indifferent")) |>
   ggplot(aes(x = interact_true)) +
   geom_bar(fill = "brown") +
   facet_wrap(~Indifferent) +
@@ -164,8 +170,10 @@ interact_1 <- squirrels |>
        title = "Interaction Effect between Tail Flags and Quaas")
 
 interact_2 <- squirrels |>
-  mutate(interact_true = ifelse(`Tail flags`== TRUE & Kuks == TRUE, TRUE, FALSE)) |>
-  mutate(Indifferent = ifelse(Indifferent == TRUE, "Indifferent", "Not Indifferent")) |>
+  mutate(interact_true = 
+           ifelse(`Tail flags`== TRUE & Kuks == TRUE, TRUE, FALSE)) |>
+  mutate(Indifferent = 
+           ifelse(Indifferent == TRUE, "Indifferent", "Not Indifferent")) |>
   ggplot(aes(x = interact_true)) +
   geom_bar(fill = "brown") +
   facet_wrap(~Indifferent) +
@@ -331,7 +339,9 @@ squirrels_fit_full <- squirrels_workflow1 |>
 dev_reduced <- glance(squirrels_fit_red)$deviance
 dev_full <- glance(squirrels_fit_full)$deviance
 test_stat <- dev_reduced - dev_full
-kable(pchisq(test_stat, 3, lower.tail = FALSE), col.names = c("Drop-in-deviance p-value"))
+kable(pchisq(test_stat, 3, lower.tail = FALSE), 
+      col.names = c("Drop-in-deviance p-value"),
+      digits = 3)
 ```
 
 ### Multicollinearity
@@ -373,7 +383,9 @@ There is one numeric variable in Model 2, `Above Ground Sighter Measurement`, so
 
 ```{r}
 squirrels |> 
-  mutate(above_bin = cut_interval(as.numeric(`Above Ground Sighter Measurement`), n = 10)) |>
+  mutate(above_bin = 
+           cut_interval(as.numeric(`Above Ground Sighter Measurement`), 
+                        n = 10)) |>
   group_by(above_bin) |>
   mutate(mean_above = mean(as.numeric(`Above Ground Sighter Measurement`))) |>
   count(mean_above, Indifferent) |>
@@ -451,13 +463,14 @@ squirrels_pred |>
 
 cutoff_prob <- 0.5
 squirrels_pred |>
-  mutate(Indifferent_predicted = as_factor(if_else(.pred_TRUE >= cutoff_prob, TRUE, FALSE))) |>
+  mutate(Indifferent_predicted = 
+           as_factor(if_else(.pred_TRUE >= cutoff_prob, TRUE, FALSE))) |>
   conf_mat(truth = Indifferent, estimate = Indifferent_predicted)
 ```
 
 Of all the variables we examined, `Above Ground Sighter Measurement` was the only term that had coefficients with significant p-values at $\alpha = 0.05$ significance level. For every additional 1 meter in the squirrel's location above ground, the odds that it is indifferent is multiplied by a factor of `r round(exp(-0.009), 3)` ($\exp(-0.009)$), holding all else constant. Although `Adult_Juvenile` is not significant at the $\alpha = 0.05$ level, it is significant at the $\alpha = 0.10$ level. This means that the odds that a juvenile squirrel is indifferent to a human is expected to be `r round(exp(-0.229), 3)` ($\exp(-0.229)$) time the odds for an adult squirrel, holding all else constant. In other words, being a juvenile squirrel and being higher off the ground decrease the odds that a squirrel is indifferent to humans.
 
-The model does not have a high predictive power as shown by the low AUC (0.546) and accuracy `r round((116+175) / (116+100+162+175), 3)`) ($\frac{116+175}{116+100+162+175}$). This is somewhat expected given what we saw in the EDA section, where the distribution of the predictors is either similar across the two levels of response or very imbalanced.
+The model does not have a high predictive power as shown by the low AUC (0.546) and accuracy (`r round((116+175) / (116+100+162+175), 3)`, as calculated by $\frac{116+175}{116+100+162+175}$). This is somewhat expected given what we saw in the EDA section, where the distribution of the predictors is either similar across the two levels of response or very imbalanced.
 
 # Discussion and Conclusion
 
@@ -478,10 +491,6 @@ For future work, we will try to extract more useful predictors from feature sele
 The squirrels with repeated observations are summarized in the following table.
 
 ```{r}
-#squirrels <- read_csv("data/squirrel_data.csv")
-#squirrels_dups <- squirrels |> group_by(`Unique Squirrel ID`) |> 
-  #summarize(count = n()) |> 
-  #filter(count > 1) 
 squirrels_dups |> kable(caption = "Squirrels Observed More Than Once")
 ```
 
