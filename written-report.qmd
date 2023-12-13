@@ -104,7 +104,6 @@ dist_activity <- squirrels |>
   labs(title = "Spread of Activity Scores",
        x = "Activity Score",
        y = "Frequency") 
-summary(squirrels$Activity_Score)
 ```
 
 ```{r}
@@ -172,7 +171,7 @@ interact_1 <- squirrels |>
   facet_wrap(~Indifferent) +
   labs(x = "Interaction between Quaas and Tail Flags",
        y = "Count",
-       title = "Interaction Effect between Tail Flags and Quaas in Indifferent Or Not")
+       title = "Interaction Effect between Tail Flags and Quaas")
 
 interact_2 <- squirrels |>
   mutate(interact_true = ifelse(`Tail flags`== TRUE & Kuks == TRUE, TRUE, FALSE)) |>
@@ -182,7 +181,7 @@ interact_2 <- squirrels |>
   facet_wrap(~Indifferent) +
   labs(x = "Interaction between Kuks and Tail Flags",
        y = "Count",
-       title = "Interaction Effect between Tail Flags and Kuks in Indifferent Or Not")
+       title = "Interaction Effect between Tail Flags and Kuks")
 
 grid.arrange(interact_1, interact_2, nrow = 2) 
 ```
