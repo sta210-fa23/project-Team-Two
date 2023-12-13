@@ -419,13 +419,18 @@ squirrels_pred <- predict(squirrels_fit_final, squirrels_test, type = "prob") |>
 ```
 
 ```{r}
+#| fig-width: 3
+#| fig-height: 3
+
+
 squirrels_pred |>
   roc_curve(
     truth = Indifferent,
     .pred_TRUE,
     event_level = "second"
   ) |>
-  autoplot()
+  autoplot() +
+  labs(title = "ROC Curve")
 
 squirrels_pred |>
   roc_auc(
@@ -433,6 +438,7 @@ squirrels_pred |>
     .pred_TRUE,
     event_level = "second"
   )
+
 cutoff_prob <- 0.5
 squirrels_pred |>
   mutate(Indifferent_predicted = as_factor(if_else(.pred_TRUE >= cutoff_prob, TRUE, FALSE))) |>
@@ -474,7 +480,8 @@ squirrels |>
   geom_point() + 
   geom_smooth(method = "lm", se = FALSE) +
   labs(x = "Mean Above Ground Sighter Measurement", 
-       y = "Empirical logit")
+       y = "Empirical logit",
+       title = "Empirical Logit vs. Above Ground Sighter Measurement")
 ```
 
 We could improve this condition if we had more specific data with fewer NA values. However, since there are currently no obvious non-linear patterns between `Above Ground Sighter Measurement` and the empirical logit, it is reasonable to conclude that the linearity condition is satisfied.
