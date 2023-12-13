@@ -80,7 +80,6 @@ For variable `Age`, there is an unwanted level of "?", which is probably due to 
 squirrels <- squirrels |> filter(Age != "?")
 ```
 
-
 We then create a numeric variable named `Activity_Score` that encapsulates the aggregate number of activities a squirrel is engaged in during the observation period. The distribution of the `Activity_Score` variable is unimodal, slightly right skewed, and has a median of 1. This means that most squirrels in the data set were only engaged in 1 activity during the span of observation.
 
 ```{r}
@@ -188,10 +187,6 @@ interact_2 <- squirrels |>
 grid.arrange(interact_1, interact_2, nrow = 2) 
 ```
 
-## Data dictionary
-
-The data dictionary can be found [here](https://github.com/sta210-fa23/project-Team-Two/blob/main/data/README.md).
-
 # **Methodology**
 
 ## Analysis approach
@@ -221,7 +216,6 @@ squirrels_spec <- logistic_reg() |>
 Model 1 includes all variables stated in our hypothesis.
 
 Recipe for Model 1 steps: 1) Change response variable into factors. 2) Map all "FALSE" in `Above Ground Sighter Measurement` variable to 0, then convert the variable type to integer. 3) Create dummy variables for all nominal predictors. 4) Create interaction terms between `Quaas` and `Tail flags` 5) Remove all variables with zero variance.
-
 
 ```{r}
 #| message: false
@@ -370,7 +364,6 @@ library(rms)
 kable(vif(model$fit), col.names = c('VIF'), caption = "VIF Table of Predictors")
 ```
 
-
 From the VIF table, there are no concerning VIF values (greater than 10), so we do not need to adjust for any multicollinearity issue in our model.
 
 ```{r}
@@ -387,26 +380,7 @@ We will check model conditions for Model 2 since this is the better performing m
 
 **Linearity**
 
-There is one numeric variable in Model 2, `Above Ground Sighter Measurement`, so we check its linearity using empirical logit.
-
-```{r}
-squirrels |> 
-  mutate(above_bin = cut_interval(as.numeric(`Above Ground Sighter Measurement`), n = 10)) |>
-  group_by(above_bin) |>
-  mutate(mean_above = mean(as.numeric(`Above Ground Sighter Measurement`))) |>
-  count(mean_above, Indifferent) |>
-  mutate(prop = n/sum(n)) |>
-  filter(Indifferent == TRUE) |>
-  mutate(emp_logit = log(prop/(1-prop))) |>
-  ggplot(aes(x = mean_above, y = emp_logit)) + 
-  geom_point() + 
-  geom_smooth(method = "lm", se = FALSE) +
-  labs(x = "Mean Above Ground Sighter Measurement", 
-       y = "Empirical logit")
-
-```
-
-The linearity condition is satisfied. There is not an obvious non-linear relationship between the empirical logit and the predictor variable of `Above Ground Sighter Measurement`. We could improve this condition if we had more specific data with fewer NA values. However, since there are currently no obvious non-linear patterns between `Above Ground Sighter Measurement` and the empirical logit, it is reasonable to conclude that the linearity condition is satisfied.
+The linearity condition is satisfied (see Appendix). There is not an obvious non-linear relationship between the empirical logit and the predictor variable of `Above Ground Sighter Measurement`.
 
 **Randomness**
 
@@ -414,9 +388,9 @@ The data was collected from the sightings of squirrels in Central Park, NYC from
 
 **Independence**
 
-The data are not spatially or time correlated since the data were collected in one time snapshot and in one location. Therefore, we have no reason to believe that independence was violated.
+The data are not spatially or time-correlated since the data were collected in one-time snapshot and in one location. Therefore, we have no reason to believe that independence was violated.
 
-Thus, all model conditions for logistic regression is satisfied.
+Thus, all model conditions for logistic regression are satisfied.
 
 # Results
 
@@ -480,3 +454,27 @@ Although `Above Ground Sighter Measurement` had a statistically significant coef
 One important limitations is the concerns about the way data is collected. For example, based on the data description, the data is collected from volunteer sighting in NYC. This might introduce some lack of rigorousness, especially when it comes to numeric variables like `Above Ground Sighter Measurement` since the volunteers might give a very subjective estimation of the height above the ground when standing and observing from distance. We have considered turning `Above Ground Sighter Measurement` into a categorical variable, but we have found that this further decreased our model's predictive power, potentially due to the fact that we are losing information when mapping this variable to a true/false variable. In addition, there are a lot of NA's in the dataset, which to some extent limits our ability to do analysis.
 
 For future work, we will try to extract more useful predictors from feature selection and feature engineering steps in order to increase the predictive power of our model. For example, instead of simply dropping the longitude and latitude from the dataset, we could potentially search the longitude and latitude of downtown NYC and use this information to calculate the Euclidean distance (or perhaps Manhattan distance since it's in NYC) between each observation and the city center for the model. In addition, we could try some non-linear machine learning models, such as random forest and boosting, since the linear model seem not to be able to give accurate predictions in this case.
+
+# Appendix
+
+**Linearity Condition**
+
+There is one numeric variable in Model 2, `Above Ground Sighter Measurement`, so we check its linearity using empirical logit.
+
+```{r}
+squirrels |> 
+  mutate(above_bin = cut_interval(as.numeric(`Above Ground Sighter Measurement`), n = 10)) |>
+  group_by(above_bin) |>
+  mutate(mean_above = mean(as.numeric(`Above Ground Sighter Measurement`))) |>
+  count(mean_above, Indifferent) |>
+  mutate(prop = n/sum(n)) |>
+  filter(Indifferent == TRUE) |>
+  mutate(emp_logit = log(prop/(1-prop))) |>
+  ggplot(aes(x = mean_above, y = emp_logit)) + 
+  geom_point() + 
+  geom_smooth(method = "lm", se = FALSE) +
+  labs(x = "Mean Above Ground Sighter Measurement", 
+       y = "Empirical logit")
+```
+
+We could improve this condition if we had more specific data with fewer NA values. However, since there are currently no obvious non-linear patterns between `Above Ground Sighter Measurement` and the empirical logit, it is reasonable to conclude that the linearity condition is satisfied.
